@@ -1,0 +1,146 @@
+#pragma once
+#define FMT_HEADER_ONLY
+#include <iostream>
+#include <vector>
+#include <fstream>
+#include "fmt/format.h" // Core fmt functions
+#include "fmt/color.h"  // Text coloring fmt functions
+#include "fmt/printf.h" // fmt::sprintf
+
+using u8 = std::uint8_t;
+using u16 = std::uint16_t;
+using u32 = std::uint32_t;
+using u64 = std::uint64_t;
+
+using s8 = std::int8_t;
+using s16 = std::int16_t;
+using s32 = std::int32_t;
+using s64 = std::int64_t;
+
+namespace Helpers {
+    template <typename... Args>
+    [[noreturn]] static void panic (const char* fmt, const Args&... args) {
+        fmt::print (fg(fmt::color::red), fmt, args...);
+        fmt::print (fg(fmt::color::red), "Aborting...\n");
+        exit(1);
+    }
+
+    template <typename... Args>
+    static void warn (const char* fmt, const Args&... args) {
+        fmt::print (fg(fmt::color::red), fmt, args...);
+    }
+
+    static auto loadROM (std::string directory) -> std::vector <u8> {
+        std::ifstream file (directory, std::ios::binary);
+        if (file.fail())
+            panic ("Couldn't read file at {}\n", directory.c_str());
+
+        std::vector<u8> ROM;
+        file.unsetf(std::ios::skipws);
+
+        ROM.insert(ROM.begin(),
+                  std::istream_iterator<uint8_t>(file),
+                   std::istream_iterator<uint8_t>());
+
+        file.close();
+        std::cout << "ROM Loaded successfully!\n";
+        return ROM;
+    }
+
+    static constexpr auto buildingInDebugMode() -> bool {
+        #ifdef NDEBUG
+            return false;
+         #endif
+
+         return true;
+    }
+
+    template <typename... Args>
+    static void debugPrint (const char* fmt, const Args&... args) {
+        if constexpr (buildingInDebugMode()) {
+            fmt::print (fmt, args...);
+        }
+    }
+
+    static inline constexpr auto signExtend32 (u32 value, u32 startingSize) -> u32 {
+        auto temp = (s32) value;
+        auto bitsToShift = 32 - startingSize;
+        return (u32) (temp << bitsToShift >> bitsToShift);
+    }
+
+    static inline constexpr auto signExtend16 (u16 value, u32 startingSize) -> u16 {
+        auto temp = (s16) value;
+        auto bitsToShift = 16 - startingSize;
+        return (u16) (temp << bitsToShift >> bitsToShift);
+    }
+
+    static inline constexpr auto isBitSet (u32 value, int bit) -> bool {
+        return (value >> bit) & 1;
+    }
+
+    template <typename T>
+    static inline constexpr auto rotr (T value, int bits) -> T {
+        if (!bits)
+            return value; 
+
+        constexpr auto bitWidth = sizeof(T) * 8;
+        bits &= bitWidth - 1;
+        return (value >> bits) | (value << (bitWidth - bits));
+    }
+
+    template <typename T>
+    static inline constexpr auto rotl (T value, int bits) -> T {
+        if (!bits)
+            return value; 
+
+        constexpr auto bitWidth = sizeof(T) * 8;
+        bits &= bitWidth - 1;
+        return (value << bits) | (value >> (bitWidth - bits));
+    }
+
+    static inline void debugAssert (bool condition, std::string message) {
+        if constexpr (buildingInDebugMode()) {
+            if (!condition) 
+                Helpers::panic ("Assertion failed. Message: {}\n", message);
+        }
+    }
+
+    template <typename T>
+    T bswap(T);
+
+    template<>
+    inline u8 bswap <u8> (u8 val) {
+        return val;
+    }
+
+    template<>
+    inline u16 bswap <u16> (u16 val) {
+        return __builtin_bswap16(val);
+    }
+
+    template<>
+    inline u32 bswap <u32> (u32 val) {
+        return __builtin_bswap32(val);
+    }
+
+    template<>
+    inline u64 bswap <u64> (u64 val) {
+        return __builtin_bswap64(val);
+    }
+
+    inline u32 clz (u32 val) {
+        return val ? __builtin_clz(val) : 0;
+    }
+
+    template <typename T>
+    T readBE (const u8* pointer) {
+        // TODO: Detect and support big endian systems
+        return bswap(*(const T*)(pointer));
+    }
+
+    template <typename T>
+    void writeBE (u8* pointer, T value) {
+        // TODO: Detect and support big endian systems
+        *(T*)pointer = bswap(value);
+    }
+}
