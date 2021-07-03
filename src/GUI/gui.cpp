@@ -14,7 +14,12 @@ GUI::GUI() : window(sf::VideoMode(800, 600), "SFML window") {
     io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
     io.ConfigFlags |= ImGuiConfigFlags_DpiEnableScaleViewports;
     io.ConfigFlags |= ImGuiConfigFlags_DpiEnableScaleFonts;
-    
+
+    io.Fonts -> Clear();
+    auto fontPath = std::filesystem::current_path() / "DejaVuSansMono.ttf"; // Use Deja Vu Sans Mono as the font
+    auto font = io.Fonts -> AddFontFromFileTTF (fontPath.string().c_str(), 18.f);
+    if (!font) // Fall back to default font if not found
+        io.Fonts -> AddFontDefault();
     ImGui::SFML::UpdateFontTexture(); // Updates font texture
 }
 

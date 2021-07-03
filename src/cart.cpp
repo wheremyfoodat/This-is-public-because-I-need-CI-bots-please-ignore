@@ -30,7 +30,7 @@ void Cartridge::getROMInfo (json& dbEntry) {
     else if (mapperType.find("Extended HiROM") != std::string::npos)
         mapper = Mappers::ExHiROM;
     else 
-        Helpers::panic ("Unrecognized mapper type.\n{}\n", mapper);
+        Helpers::panic ("Unrecognized mapper type.\n{}\n", mapperName());
 
     // Set up exception vectors
     switch (mapper) {
@@ -41,7 +41,7 @@ void Cartridge::getROMInfo (json& dbEntry) {
             nmiVector = (rom[0x7FEB] << 8) | rom[0x7FEA];
             irqVector = (rom[0x7FEF] << 8) | rom[0x7FEE];
         break;
-        default: Helpers::panic ("Unknown mapper: {}\n", mapper);
+        default: Helpers::panic ("Unknown mapper: {}\n", mapperName());
     }
 
     romSize = std::stoi (dbEntry["ROMSize"].dump()) * 128; // Convert ROM size to kilobytes from megabits

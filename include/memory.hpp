@@ -21,7 +21,18 @@ namespace Memory {
     extern std::array <u8, 128 * kilobyte> wram;
 
     // Software fastmem tables
-    //uintptr_t pageTableRead
+    constexpr unsigned pageSize = 2048; // 2 Kilobyte pages
+    constexpr unsigned pageCount = 0x1000000 / pageSize;
+
+    static std::array <uint8_t*, pageCount> pageTableRead; // Page table for reads
+    static std::array <uint8_t*, pageCount> pageTableWrite; // Page table for writes
 
     void loadROM (std::filesystem::path directory);
+    u8 read8 (u32 address);
+    u16 read16 (u32 address);
+
+    void write8 (u32 address, u8 value);
+    void write16 (u32 address, u16 value);
+    
+    void mapFastmemPages();
 }; // End Namespace Memory

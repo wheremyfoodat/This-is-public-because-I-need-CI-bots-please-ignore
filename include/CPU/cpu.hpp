@@ -41,4 +41,36 @@ public:
 
     void step();
     void reset();
+
+private:
+    u32 pbOffset = 0; // pb << 16 and db << 16 respectively
+    u32 dbOffset = 0; // Used so we don't have to shift on every memory access
+
+    // Reads a byte from memory[pb:pc] and increments pc by 1
+    u8 nextByte() {
+        const auto value = Memory::read8 (pbOffset | pc);
+        pc += 1;
+
+        return value;
+    }
+
+    // Reads a word from memory[pb:pc] and increments pc by 2
+    u16 nextWord() {
+        const auto value = Memory::read16 (pbOffset | pc);
+        pc += 2;
+
+        return value;
+    }
+
+    void setPB (u8 value) {
+        pb = value;
+        pbOffset = pb << 16;
+    }
+
+    void setDB (u8 value) {
+        db = value;
+        dbOffset = db << 16;
+    }
+
+    void executeOpcode (u8 opcode);
 };

@@ -10,7 +10,7 @@ json Memory::gameDB;
 Cartridge Memory::cart;
 
 // Memory areas
-std::array <u8, 128 * Memory::kilobyte> wram;
+std::array <u8, 128 * Memory::kilobyte> Memory::wram;
 
 // snes.hpp
 SNES g_snes = SNES();
