@@ -21,4 +21,5 @@ private:
 
     bool showRegisterWindow = false;
     bool showCartWindow = false;
+    bool running = false; // Is the emulator running?
 };

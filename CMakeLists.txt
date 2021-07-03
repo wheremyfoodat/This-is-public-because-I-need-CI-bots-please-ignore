@@ -27,9 +27,10 @@ include_directories(third-party/imgui/)
 include_directories(third-party/imgui-sfml/)
 include_directories(third-party/fmt/include)
 include_directories(third-party/Dolphin)
-include_directories(third-party/xbyak)
 include_directories(third-party/tinyfiledialogs)
 include_directories(third-party/imgui-club/imgui_memory_editor)
+include_directories(third-party/json)
+include_directories(third-party/sha1)
 
 add_subdirectory(third-party/fmt)
 add_subdirectory(third-party/imgui-sfml)
@@ -37,12 +38,11 @@ add_subdirectory(third-party/imgui-sfml)
 add_executable(SNES
     src/main.cpp
     src/memory.cpp
-    src/carts.cpp
+    src/cart.cpp
+    src/snes.cpp
     src/externals.cpp
 
-    src/CPU/dynarec/memory_management.cpp
-    src/CPU/dynarec/dynarec.cpp
-
+    src/CPU/cpu.cpp
     src/GUI/gui.cpp
 
     third-party/imgui/imgui_draw.cpp
@@ -52,6 +52,7 @@ add_executable(SNES
     third-party/imgui/imgui.cpp
     third-party/imgui-sfml/imgui-SFML.cpp
     third-party/tinyfiledialogs/tinyfiledialogs.c
+    third-party/sha1/sha1.cpp
 )
 
 if(WIN32)

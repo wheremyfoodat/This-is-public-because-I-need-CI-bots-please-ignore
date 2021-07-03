@@ -3,6 +3,8 @@
 #include <iostream>
 #include <vector>
 #include <fstream>
+#include <utility>     // For std::pair, used by loadROMWithHash
+#include "sha1.hpp"    // For calculating SHA hashes, used by loadROMWithHash
 #include "fmt/format.h" // Core fmt functions
 #include "fmt/color.h"  // Text coloring fmt functions
 #include "fmt/printf.h" // fmt::sprintf
@@ -39,6 +41,7 @@ namespace Helpers {
         fmt::print (fg(fmt::color::red), fmt, args...);
     }
 
+    // Read a ROM into a vector of uint8_t
     static auto loadROM (std::string directory) -> std::vector <u8> {
         std::ifstream file (directory, std::ios::binary);
         if (file.fail())
@@ -52,8 +55,27 @@ namespace Helpers {
                    std::istream_iterator<uint8_t>());
 
         file.close();
-        std::cout << "ROM Loaded successfully!\n";
         return ROM;
+    }
+
+    // Read a ROM into a vector of uint8_t. Return the ROM and its SHA-1 hash
+    static auto loadROMWithHash (std::string directory) -> std::pair <std::vector <u8>, std::string> {
+        std::ifstream file (directory, std::ios::binary);
+        if (file.fail())
+            panic ("Couldn't read file at {}\n", directory.c_str());
+
+        std::vector<u8> ROM;
+        file.unsetf(std::ios::skipws);
+
+        ROM.insert(ROM.begin(),
+                  std::istream_iterator<uint8_t>(file),
+                   std::istream_iterator<uint8_t>());
+
+        file.clear(); // Clear fail and EOF flags
+        file.seekg(0, std::ios::beg); // Seek back to the start to calculate the SHA-1 checksum
+        auto hash = SHA1::from_stream (file); // Calculate the checksum
+        file.close(); // Close the file
+        return std::make_pair (ROM, hash); // Return the vector and its hash
     }
 
     static constexpr auto buildingInDebugMode() -> bool {

@@ -14,15 +14,14 @@ GUI::GUI() : window(sf::VideoMode(800, 600), "SFML window") {
     io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
     io.ConfigFlags |= ImGuiConfigFlags_DpiEnableScaleViewports;
     io.ConfigFlags |= ImGuiConfigFlags_DpiEnableScaleFonts;
-
-    auto font = io.Fonts -> AddFontFromFileTTF("D:\\Repos\\SNES-JIT\\build\\DejaVuSansMono.ttf", 12.f); // Use DejaVu font (TODO: Don't crash if not found)
-    if (!font) Helpers::panic ("Couldn't find font2");
     
     ImGui::SFML::UpdateFontTexture(); // Updates font texture
-    //ImGui::PushFont(font); // Push new font
 }
 
 void GUI::update() {
+    if (running)
+        g_snes.runFrame();
+
     sf::Event event;
 
     while (window.pollEvent(event)) {
@@ -34,8 +33,10 @@ void GUI::update() {
     ImGui::SFML::Update(window, deltaClock.restart());
  
     showMenuBar();
-    showCartInfo();
-    showRegisters();
+    if (showCartWindow) 
+        showCartInfo();
+    if (showRegisterWindow) 
+        showRegisters();
 
     window.clear();
     ImGui::SFML::Render(window);
@@ -57,6 +58,18 @@ void GUI::showMenuBar() {
 
             auto path = (file == nullptr) ? std::filesystem::path("") : std::filesystem::path(file); // Check if file dialog was canceled
             Memory::loadROM (path);
+            g_snes.reset();
+        }
+
+        if (ImGui::BeginMenu("Emulation")) {
+            bool cartInserted = Memory::cart.mapper != Mappers::NoCart;
+
+            if (ImGui::MenuItem("Trace", nullptr) && cartInserted) // Make sure not to run without cart
+                g_snes.step();
+            if (ImGui::MenuItem ("Run", nullptr, &running)) // Same here
+                running = running ? cartInserted : false;
+
+            ImGui::EndMenu();
         }
 
         if (ImGui::BeginMenu("Debug")) {
@@ -70,16 +83,14 @@ void GUI::showMenuBar() {
 }
 
 void GUI::showRegisters() {
-    if (!showRegisterWindow) return;
-
     if (ImGui::Begin("CPU registers")) {
         if (g_snes.cpu.psw.shortAccumulator) // Check the short accumulator bit in PSW to see if a is 8 or 16-bits
-            ImGui::Text ("A:  (%02X)%02X", g_snes.cpu.a.value >> 8, g_snes.cpu.a.value & 0xFF);
+            ImGui::Text ("A:  (%02X)%02X", (u8) g_snes.cpu.a.ah, (u8) g_snes.cpu.a.al);
         else
-            ImGui::Text ("A: %04X", g_snes.cpu.a.value);
+            ImGui::Text ("A: %04X", g_snes.cpu.a.raw);
 
-        ImGui::Text ("X:  %04X", g_snes.cpu.x.value);
-        ImGui::Text ("Y:  %04X", g_snes.cpu.y.value);
+        ImGui::Text ("X:  %04X", g_snes.cpu.x);
+        ImGui::Text ("Y:  %04X", g_snes.cpu.y);
         ImGui::Text ("SP: %04X", g_snes.cpu.sp);
         ImGui::Text ("PC: %04X", g_snes.cpu.pc);
         ImGui::NewLine();
@@ -97,35 +108,47 @@ void GUI::showRegisters() {
         bool sign = g_snes.cpu.psw.sign;
         bool carry = g_snes.cpu.psw.carry;
         bool overflow = g_snes.cpu.psw.overflow;
+        bool emulationMode = g_snes.cpu.emulationMode;
 
         ImGui::Checkbox ("8-bit accumulator", &shortAccumulator);
         ImGui::SameLine();
-        ImGui::Checkbox ("8-bit indexes", &shortIndex);
-        ImGui::Checkbox ("IRQs enabled", &irqsEnabled);
+        ImGui::Checkbox ("8-bit indexes    ", &shortIndex);
+        ImGui::Checkbox ("IRQs enabled     ", &irqsEnabled);
         ImGui::SameLine();
-        ImGui::Checkbox ("Decimal mode", &decimal);
+        ImGui::Checkbox ("Decimal mode     ", &decimal);
+        ImGui::NewLine();
 
-        ImGui::Checkbox ("Zero", &zero);
+        ImGui::Checkbox ("Zero    ", &zero);
         ImGui::SameLine();
-        ImGui::Checkbox ("Sign", &sign);
-        ImGui::Checkbox ("Carry", &carry);
+        ImGui::Checkbox ("Sign    ", &sign);
+        ImGui::Checkbox ("Carry   ", &carry);
         ImGui::SameLine();
         ImGui::Checkbox ("Overflow", &overflow);
+        ImGui::Checkbox ("Emulation Mode", &emulationMode);
         ImGui::End();
     }
 }
 
 void GUI::showCartInfo() {
-    if (!showCartWindow) return;
-
     if (ImGui::Begin("Cartridge Info")) {
-        ImGui::Text ("Reset Vector: %04X  IRQ Vector: %04X", Memory::resetVector, Memory::irqVector);
-        ImGui::Text ("COP   Vector: %04X  BRK Vector: %04X", Memory::copVector, Memory::brkVector);
-        ImGui::Text ("NMI   Vector: %04X", Memory::nmiVector);
+        bool battery = Memory::cart.hasBattery;
+        bool rtc = Memory::cart.hasRTC;
+
+        ImGui::Text ("Reset Vector: %04X  IRQ Vector: %04X", Memory::cart.resetVector, Memory::cart.irqVector);
+        ImGui::Text ("COP   Vector: %04X  BRK Vector: %04X", Memory::cart.copVector, Memory::cart.brkVector);
+        ImGui::Text ("NMI   Vector: %04X", Memory::cart.nmiVector);
 
         ImGui::NewLine();
-        ImGui::Text ("Mapper: %s", Memory::getMapperName(Memory::mapper).c_str());
-        ImGui::Text ("Size:   %.2fKB", (float) Memory::romSize / 1024);
+        ImGui::Text ("Mapper: %s", Memory::cart.mapperName());
+        ImGui::Text ("ROM Size: %dKB (%.2fMB)", Memory::cart.romSize, (float) Memory::cart.romSize / 1024);
+        ImGui::Text ("RAM Size: %dKB", Memory::cart.ramSize);
+        ImGui::Text ("Expansion Chip: %s", Memory::cart.expansionChipName());
+        ImGui::Text ("SHA-1 hash: %s", Memory::cart.sha1_hash.c_str());
+        ImGui::NewLine();
+        
+        ImGui::Checkbox("Battery", &battery);
+        ImGui::SameLine();
+        ImGui::Checkbox("RTC", &rtc);
         ImGui::End();
     }
 }

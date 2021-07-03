@@ -1,16 +1,16 @@
+#include "snes.hpp"
 #include "memory.hpp"
 
 // For JIT-related reasons, we have a crap ton of globals
 // This file handles all extern declarations
 
-// Memory.hpp
+// memory.hpp
 // Cart info
-unsigned Memory::romSize = 0;
-Mappers Memory::mapper = Mappers::NoCart;
+json Memory::gameDB;
+Cartridge Memory::cart;
 
-// Exception vector
-u16 Memory::resetVector = 0;
-u16 Memory::nmiVector = 0;
-u16 Memory::irqVector = 0;
-u16 Memory::copVector = 0;
-u16 Memory::brkVector = 0;
+// Memory areas
+std::array <u8, 128 * Memory::kilobyte> wram;
+
+// snes.hpp
+SNES g_snes = SNES();
