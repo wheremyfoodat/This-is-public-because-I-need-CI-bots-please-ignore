@@ -1,6 +1,7 @@
 #pragma once
 #include "utils.hpp"
 #include "CPU/cpu.hpp"
+#include "memory.hpp"
 
 class SNES {
 public:

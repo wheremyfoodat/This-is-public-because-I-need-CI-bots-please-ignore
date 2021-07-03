@@ -2,6 +2,7 @@
 #include <SFML/Graphics.hpp>
 #include "imgui.h"
 #include "imgui-SFML.h"
+#include "imgui_memory_editor.h"
 
 class GUI {
     sf::RenderWindow window;
@@ -16,4 +17,8 @@ public:
 private:
     void showMenuBar();
     void showRegisters();
+    void showCartInfo();
+
+    bool showRegisterWindow = false;
+    bool showCartWindow = false;
 };

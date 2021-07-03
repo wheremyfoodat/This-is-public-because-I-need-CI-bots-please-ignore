@@ -26,6 +26,15 @@ namespace Helpers {
     }
 
     template <typename... Args>
+    static void panic (bool condition, const char* fmt, const Args&... args) {
+        if (condition) {
+            fmt::print (fg(fmt::color::red), fmt, args...);
+            fmt::print (fg(fmt::color::red), "Aborting...\n");
+            exit(1);
+        }
+    }
+
+    template <typename... Args>
     static void warn (const char* fmt, const Args&... args) {
         fmt::print (fg(fmt::color::red), fmt, args...);
     }

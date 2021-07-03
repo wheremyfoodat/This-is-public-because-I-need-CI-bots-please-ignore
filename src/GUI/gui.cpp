@@ -18,7 +18,7 @@ GUI::GUI() : window(sf::VideoMode(800, 600), "SFML window") {
     auto font = io.Fonts -> AddFontFromFileTTF("D:\\Repos\\SNES-JIT\\build\\DejaVuSansMono.ttf", 12.f); // Use DejaVu font (TODO: Don't crash if not found)
     if (!font) Helpers::panic ("Couldn't find font2");
     
-    ImGui::SFML::UpdateFontTexture(); // Uupdates font texture
+    ImGui::SFML::UpdateFontTexture(); // Updates font texture
     //ImGui::PushFont(font); // Push new font
 }
 
@@ -34,6 +34,7 @@ void GUI::update() {
     ImGui::SFML::Update(window, deltaClock.restart());
  
     showMenuBar();
+    showCartInfo();
     showRegisters();
 
     window.clear();
@@ -55,7 +56,13 @@ void GUI::showMenuBar() {
                 0);
 
             auto path = (file == nullptr) ? std::filesystem::path("") : std::filesystem::path(file); // Check if file dialog was canceled
-            fmt::print("{}", path.string());
+            Memory::loadROM (path);
+        }
+
+        if (ImGui::BeginMenu("Debug")) {
+            ImGui::MenuItem ("Show registers", nullptr, &showRegisterWindow);
+            ImGui::MenuItem ("Show cart info", nullptr, &showCartWindow);
+            ImGui::EndMenu();
         }
 
         ImGui::EndMainMenuBar();
@@ -63,7 +70,9 @@ void GUI::showMenuBar() {
 }
 
 void GUI::showRegisters() {
-    ImGui::Begin("CPU registers");
+    if (!showRegisterWindow) return;
+
+    if (ImGui::Begin("CPU registers")) {
         if (g_snes.cpu.psw.shortAccumulator) // Check the short accumulator bit in PSW to see if a is 8 or 16-bits
             ImGui::Text ("A:  (%02X)%02X", g_snes.cpu.a.value >> 8, g_snes.cpu.a.value & 0xFF);
         else
@@ -102,5 +111,21 @@ void GUI::showRegisters() {
         ImGui::Checkbox ("Carry", &carry);
         ImGui::SameLine();
         ImGui::Checkbox ("Overflow", &overflow);
-    ImGui::End();
+        ImGui::End();
+    }
+}
+
+void GUI::showCartInfo() {
+    if (!showCartWindow) return;
+
+    if (ImGui::Begin("Cartridge Info")) {
+        ImGui::Text ("Reset Vector: %04X  IRQ Vector: %04X", Memory::resetVector, Memory::irqVector);
+        ImGui::Text ("COP   Vector: %04X  BRK Vector: %04X", Memory::copVector, Memory::brkVector);
+        ImGui::Text ("NMI   Vector: %04X", Memory::nmiVector);
+
+        ImGui::NewLine();
+        ImGui::Text ("Mapper: %s", Memory::getMapperName(Memory::mapper).c_str());
+        ImGui::Text ("Size:   %.2fKB", (float) Memory::romSize / 1024);
+        ImGui::End();
+    }
 }

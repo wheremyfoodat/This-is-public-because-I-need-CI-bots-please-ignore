@@ -8,3 +8,6 @@
 [submodule "third-party/imgui-sfml"]
 	path = third-party/imgui-sfml
 	url = https://github.com/eliasdaler/imgui-sfml
+[submodule "third-party/imgui-club"]
+	path = third-party/imgui-club
+	url = https://github.com/ocornut/imgui_club

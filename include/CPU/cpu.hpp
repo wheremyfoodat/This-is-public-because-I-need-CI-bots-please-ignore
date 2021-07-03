@@ -1,6 +1,8 @@
 #pragma once
+#include <array>
 #include "BitField.hpp"
 #include "xbyak.h"
+#include "memory.hpp"
 #include "utils.hpp"
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__) // MS ABI stuff
@@ -59,6 +61,24 @@ public:
     Register <u16> x; // Index registers
     Register <u16> y;
 
+    CPU() {
+        initMemory();
+    }
+
+    ~CPU() {
+        delete[] recompilerROM;
+        delete[] recompilerWRAM;
+    }
+
+    void runBlock();
+
 private:
     bool compiling = false;
+
+    // Recompiler memory    
+    std::array <uintptr_t*, 512> recompilerBankLUT; // The first look up table for the recompiler, indexed based on the pb register
+    uintptr_t* recompilerROM; // Pointers to ROM code
+    uintptr_t* recompilerWRAM; // Pointers to WRAM code
+
+    void initMemory();
 };
