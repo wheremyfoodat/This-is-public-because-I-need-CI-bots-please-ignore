@@ -12,7 +12,7 @@ enum class Mappers {
     ExHiROM    // Extended HiROM cart
 };
 
-enum class ExpansionChip {
+enum class ExpansionChips {
     None, 
     SA_1,
     DSP_1,
@@ -28,7 +28,7 @@ enum class ExpansionChip {
 };
 
 struct Cartridge {
-    ExpansionChip secondaryChip = ExpansionChip::None; // Cart coprocessor
+    ExpansionChips secondaryChip = ExpansionChips::None; // Cart coprocessor
     Mappers mapper = Mappers::NoCart; // Cart mapper type
 
     u32 romSize = 0; // ROM size in kilobytes
@@ -59,21 +59,22 @@ struct Cartridge {
 
     const char* expansionChipName() {
         switch (secondaryChip) {
-            case ExpansionChip::None: return "None";
-            case ExpansionChip::SA_1: return "SA-1";
-            case ExpansionChip::DSP_1: return "DSP-1";
-            case ExpansionChip::DSP_2: return "DSP-2";
-            case ExpansionChip::DSP_3: return "DSP-3";
-            case ExpansionChip::DSP_4: return "DSP-4";
-            case ExpansionChip::S_DD1: return "S-DD1";
-            case ExpansionChip::C4: return "Capcom CX4";
-            case ExpansionChip::SuperFX: return "Super FX (GSU)";
-            case ExpansionChip::SuperFX2: return "Super FX 2 (GSU2)";
-            case ExpansionChip::ST018: return "ST018 (ARMv3)";
+            case ExpansionChips::None: return "None";
+            case ExpansionChips::SA_1: return "SA-1";
+            case ExpansionChips::DSP_1: return "DSP-1";
+            case ExpansionChips::DSP_2: return "DSP-2";
+            case ExpansionChips::DSP_3: return "DSP-3";
+            case ExpansionChips::DSP_4: return "DSP-4";
+            case ExpansionChips::S_DD1: return "S-DD1";
+            case ExpansionChips::C4: return "Capcom CX4";
+            case ExpansionChips::SuperFX: return "Super FX (GSU)";
+            case ExpansionChips::SuperFX2: return "Super FX 2 (GSU2)";
+            case ExpansionChips::ST018: return "ST018 (ARMv3)";
 
             default: return "Unknown";
         }
     }
 
-    void getROMInfo (json& dbEntry);
+    void getROMInfo (json& dbEntry); // Set cartridge info based on game database
+    void setDefault(); // Set cartridge info to default values if we can't find it in the db
 };

@@ -130,6 +130,9 @@ void GUI::showRegisters() {
         ImGui::SameLine();
         ImGui::Checkbox ("Overflow", &overflow);
         ImGui::Checkbox ("Emulation Mode", &emulationMode);
+        
+        if (ImGui::Button("Trace"))
+            g_snes.step();
         ImGui::End();
     }
 }

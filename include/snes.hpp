@@ -2,6 +2,7 @@
 #include <filesystem>
 #include "utils.hpp"
 #include "CPU/cpu.hpp"
+#include "PPU/ppu.hpp"
 #include "memory.hpp"
 
 class SNES {
@@ -12,6 +13,7 @@ public:
     void reset();
 
     CPU cpu;
+    PPU ppu;
 }; // End Namespace SNES
 
 extern SNES g_snes; // a global SNES object

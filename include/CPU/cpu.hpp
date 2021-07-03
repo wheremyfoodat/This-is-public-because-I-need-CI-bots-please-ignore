@@ -31,6 +31,7 @@ public:
     u16 pc = 0;
     u8 pb = 0; // Program bank register
     u8 db = 0; // Data bank register
+    u16 dpOffset = 0; // Direct page offset
 
     PSW psw { .raw = 0x34 }; // Program status word (Boot with IRQs disabled, 8-bit registers)
     Accumulator a { .raw = 0 }; // The accumulator
@@ -45,6 +46,7 @@ public:
 private:
     u32 pbOffset = 0; // pb << 16 and db << 16 respectively
     u32 dbOffset = 0; // Used so we don't have to shift on every memory access
+    u32 cycles = 0; // CYcles last instruction took
 
     // Reads a byte from memory[pb:pc] and increments pc by 1
     u8 nextByte() {
@@ -72,5 +74,47 @@ private:
         dbOffset = db << 16;
     }
 
+    template <bool setFlags>
+    u8 pop8() {
+        sp += 1;
+        const auto val = Memory::read8 (sp);
+
+        if constexpr (setFlags)
+            setNZ8 (val);
+        return val;
+    }
+
+    void push8 (u8 value) {
+        Memory::write8 (sp, value);
+        sp -= 1;
+    }
+
+    // Set the N and Z flags depending on an 8-bit value
+    void setNZ8 (u8 value) {
+        psw.zero = (value == 0);
+        psw.sign = (value >> 7);
+    }
+    
+    // Set the N and Z flags depending on a 16-bit value
+    void setNZ16 (u16 value) {
+        psw.zero = (value == 0);
+        psw.sign = (value >> 15);
+    }
+
+    void setPSW (u8 value) {
+        psw.raw = value;
+
+        // If the short index bit is turned on, x and y's top bits are cleared. This is NOT true for the accumulator
+        if (psw.shortIndex) {
+            x &= 0xFF;
+            y &= 0xFF;
+        }
+    }
+
     void executeOpcode (u8 opcode);
+    
+    // Instruction definitions are in inline header file because so templates don't anger the linker
+    #include "../../src/CPU/addressing_modes.inl"
+    #include "../../src/CPU/loads_stores.inl"
+    #include "../../src/CPU/misc.inl"
 };

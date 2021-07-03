@@ -33,6 +33,7 @@ namespace Memory {
 
     void write8 (u32 address, u8 value);
     void write16 (u32 address, u16 value);
-    
+    void writeSlow (u32 address, u8 value);
+
     void mapFastmemPages();
 }; // End Namespace Memory

@@ -13,11 +13,11 @@ void Cartridge::getROMInfo (json& dbEntry) {
 
     // Get coprocessor type
     if (expansion.find("Normal") != std::string::npos) 
-        secondaryChip = ExpansionChip::None;
+        secondaryChip = ExpansionChips::None;
     else if (expansion.find("C4") != std::string::npos)
-        secondaryChip = ExpansionChip::C4;
+        secondaryChip = ExpansionChips::C4;
     else if (expansion.find("Super FX2") != std::string::npos)
-        secondaryChip = ExpansionChip::SuperFX2;
+        secondaryChip = ExpansionChips::SuperFX2;
     else
         Helpers::panic ("Unrecognized coprocessor type.\n{}\n", expansion);
 
@@ -48,4 +48,21 @@ void Cartridge::getROMInfo (json& dbEntry) {
     ramSize = std::stoi (dbEntry["RAMSize"].dump()) / 8; // Convert RAM size to kilobytes from kilobits
     hasRTC = expansion.find ("RTC") != std::string::npos;
     hasBattery = expansion.find ("Battery") != std::string::npos;
+}
+
+// Set cart info to default if it wasn't found in the game db
+void Cartridge::setDefault() {
+    mapper = Mappers::LoROM;
+    secondaryChip = ExpansionChips::None;
+
+    romSize = rom.size();
+    ramSize = 0;
+    hasRTC = false;
+    hasBattery = false;
+
+    resetVector = (rom[0x7FFD] << 8) | rom[0x7FFC];
+    copVector = (rom[0x7FE5] << 8) | rom[0x7FE4];
+    brkVector = (rom[0x7FE7] << 8) | rom[0x7FE6];
+    nmiVector = (rom[0x7FEB] << 8) | rom[0x7FEA];
+    irqVector = (rom[0x7FEF] << 8) | rom[0x7FEE];
 }
