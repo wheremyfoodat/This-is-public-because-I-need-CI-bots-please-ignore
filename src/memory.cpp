@@ -157,6 +157,35 @@ static void Memory::writeIO (u16 address, u8 value) {
         case 0x210B: Helpers::warn ("Unimplemented write to BG12NBA (val: {:02X})\n", value); break;
         case 0x210C: Helpers::warn ("Unimplemented write to BG34NBA (val: {:02X})\n", value); break;
 
+        case 0x2115: // VMAIN
+            ppu->vmain.raw = value;
+            switch (value & 3) {
+                case 0: ppu->vramStep = 1; break;
+                case 1: ppu->vramStep = 32; break;
+                default: ppu->vramStep = 128; break;
+            }
+
+            break;
+
+        case 0x2116: ppu->vmaddr.low = value; break; // VMADDL
+        case 0x2117: ppu->vmaddr.high = value; break; // VMADDH
+        
+        case 0x2118: { // VMDATAL
+            const auto vmaddr = ppu->vmaddr.raw & 0x7FFF; // The VRAM address we'll access, masked to 15 bits
+            ppu->vram[vmaddr] = (ppu->vram[vmaddr] & 0xFF00) | value; // Write to the low byte of the address
+
+            if (!ppu->vmain.incrementOnHigh) // Increment VRAM address if vmain.7 is not set
+                ppu->vmaddr.raw += ppu->vramStep;
+        } break;
+
+        case 0x2119: { // VMDATAH
+            const auto vmaddr = ppu->vmaddr.raw & 0x7FFF; // The VRAM address we'll access, masked to 15 bits
+            ppu->vram[vmaddr] = (ppu->vram[vmaddr] & 0xFF) | (value << 8); // Write to the high byte of the address
+
+            if (ppu->vmain.incrementOnHigh) // Increment VRAM address if vmain.7 is set
+                ppu->vmaddr.raw += ppu->vramStep;
+        } break;
+
         case 0x420B: // MDMAEN
             for (auto i = 0; i < 8; i++) {
                 if (value & (1 << i)) // Each of the 8 bits signifies whether a DMA channel should fire a GPDMA

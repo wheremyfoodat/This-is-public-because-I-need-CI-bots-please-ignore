@@ -10,6 +10,7 @@ class GUI {
     sf::Texture display;
 
     MemoryEditor memoryEditor;
+    MemoryEditor vramEditor;
 
 public:
     GUI();
@@ -27,6 +28,7 @@ private:
     bool showRegisterWindow = false;
     bool showCartWindow = false;
     bool showMemoryEditor = false;
+    bool showVramEditor = false;
     bool showDMAWindow = false;
     bool running = false; // Is the emulator running?
 

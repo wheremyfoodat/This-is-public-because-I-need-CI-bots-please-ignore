@@ -10,6 +10,13 @@ union OAMAddr {
     BitField <8, 8, u16> high;
 };
 
+union VMAddr {
+    u16 raw = 0;
+    
+    BitField <0, 8, u16> low;
+    BitField <8, 8, u16> high;
+};
+
 union BGMode {
     u8 raw = 0;
 
@@ -17,13 +24,26 @@ union BGMode {
     BitField <3, 1, u16> bg3prio;
 };
 
+union VMain {
+    u8 raw = 0;
+
+    BitField <0, 2, u8> step; // (0..3 = Increment Word-Address by 1,32,128,128)
+    BitField <2, 2, u8> translation; // (0..3 = 0bit/None, 8bit, 9bit, 10bit)
+    BitField <7, 1, u8> incrementOnHigh; // Increment VRAM Address after accessing High/Low byte (0=Low, 1=High)
+};
+
 class PPU {
 public:
     OAMAddr oamaddr;
+    VMAddr vmaddr;
     BGMode bgmode;
+    VMain vmain;
+
     u8 rdnmi = 0;
+    u16 vramStep = 0; // Depending on vmain.step, this can be 1, 32 or 128
 
     std::array <u8, 256 * 224 * 4> framebuffer; // TODO: Actual coords
+    std::array <u16, 0x8000> vram; // The VRAM. Note: This is 16-bit addressed, hence why the array is made of u16's. TODO: Put on heap?
 
     PPU() {
         framebuffer.fill (0xFF);

@@ -56,6 +56,8 @@ void GUI::update() {
     
     if (showMemoryEditor)
         memoryEditor.DrawWindow ("Memory Editor", nullptr, 0x1000000);
+    if (showVramEditor)
+        vramEditor.DrawWindow ("VRAM viewer", g_snes.ppu.vram.data(), 0x10000);
 
     window.clear();
     ImGui::SFML::Render(window);
@@ -97,6 +99,7 @@ void GUI::showMenuBar() {
             ImGui::MenuItem ("Show registers", nullptr, &showRegisterWindow);
             ImGui::MenuItem ("Show cart info", nullptr, &showCartWindow);
             ImGui::MenuItem ("Show DMA info", nullptr, &showDMAWindow);
+            ImGui::MenuItem ("Show VRAM editor", nullptr, &showVramEditor);
             ImGui::MenuItem ("Show memory", nullptr, &showMemoryEditor);
             ImGui::EndMenu();
         }
