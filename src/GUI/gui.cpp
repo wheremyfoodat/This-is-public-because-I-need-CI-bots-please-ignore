@@ -4,9 +4,12 @@
 #include "snes.hpp"
 #include "utils.hpp"
 
+static ImU8 readByteImGui (const ImU8* data, size_t off) { return 69; }
+
 GUI::GUI() : window(sf::VideoMode(800, 600), "SFML window") {
     window.setFramerateLimit(60); // cap FPS to 60
     ImGui::SFML::Init(window);    // Init Imgui-SFML
+    display.create (200, 200);
 
     auto& io = ImGui::GetIO();  // Set some ImGui options
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
@@ -16,11 +19,15 @@ GUI::GUI() : window(sf::VideoMode(800, 600), "SFML window") {
     io.ConfigFlags |= ImGuiConfigFlags_DpiEnableScaleFonts;
 
     io.Fonts -> Clear();
-    auto fontPath = std::filesystem::current_path() / "DejaVuSansMono.ttf"; // Use Deja Vu Sans Mono as the font
+    auto fontPath = std::filesystem::current_path() / "DejaVuSansMono.ttf"; // Use Deja Vu Sans Mono as the font if found
     auto font = io.Fonts -> AddFontFromFileTTF (fontPath.string().c_str(), 18.f);
     if (!font) // Fall back to default font if not found
         io.Fonts -> AddFontDefault();
     ImGui::SFML::UpdateFontTexture(); // Updates font texture
+
+    // Configure memory editor
+    memoryEditor.ReadFn = &Memory::read8Debugger;
+    memoryEditor.WriteFn = &Memory::write8Debugger;
 }
 
 void GUI::update() {
@@ -38,10 +45,15 @@ void GUI::update() {
     ImGui::SFML::Update(window, deltaClock.restart());
  
     showMenuBar();
+    showDisplay();
+
     if (showCartWindow) 
         showCartInfo();
     if (showRegisterWindow) 
         showRegisters();
+    
+    if (showMemoryEditor)
+        memoryEditor.DrawWindow ("Memory Editor", nullptr, 0x1000000);
 
     window.clear();
     ImGui::SFML::Render(window);
@@ -80,6 +92,7 @@ void GUI::showMenuBar() {
         if (ImGui::BeginMenu("Debug")) {
             ImGui::MenuItem ("Show registers", nullptr, &showRegisterWindow);
             ImGui::MenuItem ("Show cart info", nullptr, &showCartWindow);
+            ImGui::MenuItem ("Show memory", nullptr, &showMemoryEditor);
             ImGui::EndMenu();
         }
 
@@ -157,6 +170,22 @@ void GUI::showCartInfo() {
         ImGui::Checkbox("Battery", &battery);
         ImGui::SameLine();
         ImGui::Checkbox("RTC", &rtc);
+        ImGui::End();
+    }
+}
+
+void GUI::showDisplay() {
+    if (ImGui::Begin("Display")) {
+        const auto size = ImGui::GetWindowSize();
+        const auto scale_x = size.x / 200.f;
+        const auto scale_y = size.y / 200.f;
+        const auto scale = scale_x < scale_y ? scale_x : scale_y;
+
+        display.update(g_snes.ppu.framebuffer.data());
+        sf::Sprite sprite (display);
+        sprite.setScale (scale, scale);
+        
+        ImGui::Image(sprite);
         ImGui::End();
     }
 }

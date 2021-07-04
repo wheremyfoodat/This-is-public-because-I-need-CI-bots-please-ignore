@@ -9,6 +9,7 @@ SNES::SNES() {
         Helpers::panic ("No game database exists! Please use the provided snes_db.json\n");
 
     db >> Memory::gameDB;
+    Memory::ppu = &ppu;
 }
 
 void SNES::reset() {

@@ -1,5 +1,17 @@
 #pragma once
 
+void lda_imm() {
+    if (psw.shortAccumulator) {
+        a.al = nextByte();
+        cycles = 2;
+    }
+
+    else {
+        a.raw = nextWord();
+        cycles = 3;
+    }
+}
+
 void ldx_imm() {
     if (psw.shortIndex) {
         x = nextByte();
@@ -12,14 +24,14 @@ void ldx_imm() {
     }
 }
 
-void lda_imm() {
-    if (psw.shortAccumulator) {
-        a.al = nextByte();
+void ldy_imm() {
+    if (psw.shortIndex) {
+        y = nextByte();
         cycles = 2;
     }
 
     else {
-        a.raw = nextWord();
+        y = nextWord();
         cycles = 3;
     }
 }
@@ -34,6 +46,32 @@ void sta() {
     else {
         const auto address = getAddress <addrMode, u16>();
         Memory::write16 (address, a.raw);
+    }
+}
+
+template <AddressingModes addrMode>
+void stx() {
+    if (psw.shortIndex) {
+        const auto address = getAddress <addrMode, u8>();
+        Memory::write8 (address, x);
+    }
+
+    else {
+        const auto address = getAddress <addrMode, u16>();
+        Memory::write16 (address, x);
+    }
+}
+
+template <AddressingModes addrMode>
+void sty() {
+    if (psw.shortIndex) {
+        const auto address = getAddress <addrMode, u8>();
+        Memory::write8 (address, y);
+    }
+
+    else {
+        const auto address = getAddress <addrMode, u16>();
+        Memory::write16 (address, y);
     }
 }
 

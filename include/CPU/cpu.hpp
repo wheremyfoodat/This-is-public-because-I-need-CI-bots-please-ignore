@@ -89,6 +89,11 @@ private:
         sp -= 1;
     }
 
+    void push16 (u16 value) {
+        push8 (value >> 8);
+        push8 (value & 0xFF);
+    }
+
     // Set the N and Z flags depending on an 8-bit value
     void setNZ8 (u8 value) {
         psw.zero = (value == 0);
@@ -116,5 +121,7 @@ private:
     // Instruction definitions are in inline header file because so templates don't anger the linker
     #include "../../src/CPU/addressing_modes.inl"
     #include "../../src/CPU/loads_stores.inl"
+    #include "../../src/CPU/branches.inl"
     #include "../../src/CPU/misc.inl"
+    #include "../../src/CPU/alu.inl"
 };

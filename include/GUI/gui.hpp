@@ -7,6 +7,9 @@
 class GUI {
     sf::RenderWindow window;
     sf::Clock deltaClock;
+    sf::Texture display;
+
+    MemoryEditor memoryEditor;
 
 public:
     GUI();
@@ -18,8 +21,10 @@ private:
     void showMenuBar();
     void showRegisters();
     void showCartInfo();
+    void showDisplay();
 
     bool showRegisterWindow = false;
     bool showCartWindow = false;
+    bool showMemoryEditor = false;
     bool running = false; // Is the emulator running?
 };

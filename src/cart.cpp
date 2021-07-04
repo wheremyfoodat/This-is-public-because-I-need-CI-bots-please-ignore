@@ -40,6 +40,13 @@ void Cartridge::getROMInfo (json& dbEntry) {
             brkVector = (rom[0x7FE7] << 8) | rom[0x7FE6];
             nmiVector = (rom[0x7FEB] << 8) | rom[0x7FEA];
             irqVector = (rom[0x7FEF] << 8) | rom[0x7FEE];
+        
+        case Mappers::HiROM:
+            resetVector = (rom[0xFFFD] << 8) | rom[0xFFFC];
+            copVector = (rom[0xFFE5] << 8) | rom[0xFFE4];
+            brkVector = (rom[0xFFE7] << 8) | rom[0xFFE6];
+            nmiVector = (rom[0xFFEB] << 8) | rom[0xFFEA];
+            irqVector = (rom[0xFFEF] << 8) | rom[0xFFEE];
         break;
         default: Helpers::panic ("Unknown mapper: {}\n", mapperName());
     }
@@ -55,7 +62,7 @@ void Cartridge::setDefault() {
     mapper = Mappers::LoROM;
     secondaryChip = ExpansionChips::None;
 
-    romSize = rom.size();
+    romSize = rom.size() / 1024;
     ramSize = 0;
     hasRTC = false;
     hasBattery = false;

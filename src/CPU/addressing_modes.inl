@@ -31,6 +31,22 @@ u32 getAddress() {
         return nextWord() | dbOffset;
     }
 
+    else if constexpr (addrMode == AddressingModes::Absolute_long) {
+        cycles += is16Bit ? 6 : 5;
+        const auto offset = nextWord();
+        const auto bank = nextByte();
+
+        return (bank << 16) | offset;
+    }
+
+    else if constexpr (addrMode == AddressingModes::Absolute_long_x) {
+        cycles += is16Bit ? 6 : 5;
+        const auto offset = nextWord();
+        const auto bank = nextByte();
+
+        return ((bank << 16) | offset) + x;
+    }
+
     else
-        Helpers::panic ("Unknown addressing mode: %d\n", addrMode);
+        Helpers::panic ("Unknown addressing mode: {}\n", addrMode);
 }
