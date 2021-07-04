@@ -17,9 +17,15 @@ union BGMode {
     BitField <3, 1, u16> bg3prio;
 };
 
-struct PPU {
+class PPU {
+public:
     OAMAddr oamaddr;
     BGMode bgmode;
+    u8 rdnmi = 0;
 
-    std::array <u8, 200 * 200 * 4> framebuffer; // TODO: Actual coords
+    std::array <u8, 256 * 224 * 4> framebuffer; // TODO: Actual coords
+
+    PPU() {
+        framebuffer.fill (0xFF);
+    }
 };

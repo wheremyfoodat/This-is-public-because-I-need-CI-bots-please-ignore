@@ -68,3 +68,50 @@ void cmp() {
         psw.carry = a.raw >= val;
     }
 }
+
+void cmp_imm() {
+    if (psw.shortAccumulator) {
+        const auto val = nextByte();
+        
+        setNZ8 (a.al - val);
+        psw.carry = a.al >= val;
+        cycles = 2;
+    }
+
+    else {
+        const auto val = nextWord();
+
+        setNZ16 (a.raw - val);
+        psw.carry = a.raw >= val;
+        cycles = 3;
+    }
+}
+
+void incIndex (u16& value) {
+    value += 1;
+
+    if (psw.shortIndex) {
+        value &= 0xFF;
+        setNZ8 (value);
+    }
+
+    else setNZ8 (value);
+    cycles = 2;
+}
+
+void decIndex (u16& value) {
+    value -= 1;
+
+    if (psw.shortIndex) {
+        value &= 0xFF;
+        setNZ8 (value);
+    }
+
+    else setNZ8 (value);
+    cycles = 2;
+}
+
+void inx() { incIndex(x); }
+void iny() { incIndex(y); }
+void dex() { decIndex(x); }
+void dey() { decIndex(y); }

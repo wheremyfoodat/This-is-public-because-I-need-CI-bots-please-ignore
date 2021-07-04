@@ -87,7 +87,7 @@ namespace Helpers {
     }
 
     template <typename... Args>
-    static void debugPrint (const char* fmt, const Args&... args) {
+    static void log (const char* fmt, const Args&... args) {
         if constexpr (buildingInDebugMode()) {
             fmt::print (fmt, args...);
         }

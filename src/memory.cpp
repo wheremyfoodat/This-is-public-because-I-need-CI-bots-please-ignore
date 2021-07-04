@@ -77,7 +77,7 @@ static u8 Memory::read8 (u32 address) {
     }
 
     else
-        Helpers::panic ("Read from slow address {:06X}\n", address);
+        return readSlow (address);
 }
 
 static void Memory::write8 (u32 address, u8 value) {
@@ -105,32 +105,78 @@ static void Memory::write16 (u32 address, u16 value) {
     write8 (address + 1, value >> 8);
 }
 
-// Slow write function for stuff like IO, where fastmem will not work
-// If "isDebugger" is true, this function does not provoke write side-effects when writing to IO
+//  write function for stuff like IO, where fastmem will not work
+// IfSlow "isDebugger" is true, this function does not provoke read side-effects when reading IO
 template <bool isDebugger>
-static void Memory::writeSlow (u32 address, u8 value) {
+static u8 Memory::readSlow (u32 address) {
     const auto bank = address >> 16;
     const auto addr = (u16) address;
 
     if (bank <= 0x3F || (bank >= 0x80 && bank <= 0xBF)) { // See if the address is in system area
         switch (addr) {
-            case 0x2100: Helpers::warn ("Unimplemented write to INIDISP (val: {:02X})\n", value); break;
-            case 0x2101: Helpers::warn ("Unimplemented write to OBJSEL (val: {:02X})\n", value); break;
-            case 0x2102: ppu->oamaddr.low = value; break;
-            case 0x2103: ppu->oamaddr.high = value; break;
-            case 0x2105: ppu->bgmode.raw = value; break;
-            case 0x2106: Helpers::warn ("Unimplemented write to mosaic register (val: {:02X})\n", value); break;
-            
-            case 0x2107: Helpers::warn ("Unimplemented write to BG1SC (val: {:02X})\n", value); break;
-            case 0x2108: Helpers::warn ("Unimplemented write to BG2SC (val: {:02X})\n", value); break;
-            case 0x2109: Helpers::warn ("Unimplemented write to BG3SC (val: {:02X})\n", value); break;
-            case 0x210A: Helpers::warn ("Unimplemented write to BG4SC (val: {:02X})\n", value); break;
-            case 0x210B: Helpers::warn ("Unimplemented write to BG12NBA (val: {:02X})\n", value); break;
-            case 0x210C: Helpers::warn ("Unimplemented write to BG34NBA (val: {:02X})\n", value); break;
+            case 0x4210: // rdnmi
+                ppu->rdnmi ^= 0x80;
+                Helpers::warn ("Read from RDNMI (stubbed)\n");
+                return ppu->rdnmi;
 
-            case 0x420D: Helpers::warn ("Unimplemented write to MEMSEL (val: {:02X})\n", value); break;
-            default: Helpers::warn ("Unimplemented write to system area address {:06X} (val: {:02X})\n", address, value);
+            default: Helpers::panic ("Read from unimplemented slow address {:06X}", address);
         }
+    }
+
+    else 
+        Helpers::panic ("Read from unimplemented slow address {:06X}", address);
+}
+
+//  write function for stuff like IO, where fastmem will not work
+// IfSlow "isDebugger" is true, this function does not provoke write side-effects when writing to IO
+template <bool isDebugger>
+static void Memory::writeSlow (u32 address, u8 value) {
+    const auto bank = address >> 16;
+    const auto addr = (u16) address;
+
+    if (bank <= 0x3F || (bank >= 0x80 && bank <= 0xBF)) // See if the address is in system area
+        writeIO <false> (addr, value);
+    else
+        Helpers::panic ("Write to unimplemented slow address {:06X}", address);
+}
+
+template <bool isDebugger>
+static void Memory::writeIO (u16 address, u8 value) {
+    switch (address) {
+        case 0x2100: Helpers::warn ("Unimplemented write to INIDISP (val: {:02X})\n", value); break;
+        case 0x2101: Helpers::warn ("Unimplemented write to OBJSEL (val: {:02X})\n", value); break;
+        case 0x2102: ppu->oamaddr.low = value; break;
+        case 0x2103: ppu->oamaddr.high = value; break;
+        case 0x2105: ppu->bgmode.raw = value; break;
+        case 0x2106: Helpers::warn ("Unimplemented write to mosaic register (val: {:02X})\n", value); break;
+
+        case 0x2107: Helpers::warn ("Unimplemented write to BG1SC (val: {:02X})\n", value); break;
+        case 0x2108: Helpers::warn ("Unimplemented write to BG2SC (val: {:02X})\n", value); break;
+        case 0x2109: Helpers::warn ("Unimplemented write to BG3SC (val: {:02X})\n", value); break;
+        case 0x210A: Helpers::warn ("Unimplemented write to BG4SC (val: {:02X})\n", value); break;
+        case 0x210B: Helpers::warn ("Unimplemented write to BG12NBA (val: {:02X})\n", value); break;
+        case 0x210C: Helpers::warn ("Unimplemented write to BG34NBA (val: {:02X})\n", value); break;
+
+        case 0x420B: // MDMAEN
+            for (auto i = 0; i < 8; i++) {
+                if (value & (1 << i)) // Each of the 8 bits signifies whether a DMA channel should fire a GPDMA
+                    doGPDMA (i);
+            }
+
+            break;
+
+        case 0x420D: Helpers::warn ("Unimplemented write to MEMSEL (val: {:02X})\n", value); break;
+
+        case 0x4300 ... 0x430B: case 0x4310 ... 0x431B: case 0x4320 ... 0x432B: // DMA channel control registers
+        case 0x4330 ... 0x433B: case 0x4340 ... 0x434B: case 0x4350 ... 0x435B:
+        case 0x4360 ... 0x436B: case 0x4370 ... 0x437B: {
+            const auto channel = (address >> 4) & 0xF;
+            const auto reg = address & 0xF;
+
+            dmaChannels[channel].controlRegs[reg] = value;
+        } break;
+
+        default: Helpers::warn ("Unimplemented write to system area address {:06X} (val: {:02X})\n", address, value); break;
     }
 }
 

@@ -22,9 +22,13 @@ private:
     void showRegisters();
     void showCartInfo();
     void showDisplay();
+    void showDMAInfo();
 
     bool showRegisterWindow = false;
     bool showCartWindow = false;
     bool showMemoryEditor = false;
+    bool showDMAWindow = false;
     bool running = false; // Is the emulator running?
+
+    int selectedDMAChannel = 0;
 };

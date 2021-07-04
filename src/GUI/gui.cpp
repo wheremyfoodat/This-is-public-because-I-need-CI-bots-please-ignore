@@ -9,7 +9,7 @@ static ImU8 readByteImGui (const ImU8* data, size_t off) { return 69; }
 GUI::GUI() : window(sf::VideoMode(800, 600), "SFML window") {
     window.setFramerateLimit(60); // cap FPS to 60
     ImGui::SFML::Init(window);    // Init Imgui-SFML
-    display.create (200, 200);
+    display.create (256, 224);
 
     auto& io = ImGui::GetIO();  // Set some ImGui options
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
@@ -51,6 +51,8 @@ void GUI::update() {
         showCartInfo();
     if (showRegisterWindow) 
         showRegisters();
+    if (showDMAWindow)
+        showDMAInfo();
     
     if (showMemoryEditor)
         memoryEditor.DrawWindow ("Memory Editor", nullptr, 0x1000000);
@@ -81,10 +83,12 @@ void GUI::showMenuBar() {
         if (ImGui::BeginMenu("Emulation")) {
             bool cartInserted = Memory::cart.mapper != Mappers::NoCart;
 
-            if (ImGui::MenuItem("Trace", nullptr) && cartInserted) // Make sure not to run without cart
+            if (ImGui::MenuItem ("Trace", nullptr) && cartInserted) // Make sure not to run without cart
                 g_snes.step();
             if (ImGui::MenuItem ("Run", nullptr, &running)) // Same here
                 running = running ? cartInserted : false;
+            if (ImGui::MenuItem ("Pause", nullptr))
+                running = false;
 
             ImGui::EndMenu();
         }
@@ -92,6 +96,7 @@ void GUI::showMenuBar() {
         if (ImGui::BeginMenu("Debug")) {
             ImGui::MenuItem ("Show registers", nullptr, &showRegisterWindow);
             ImGui::MenuItem ("Show cart info", nullptr, &showCartWindow);
+            ImGui::MenuItem ("Show DMA info", nullptr, &showDMAWindow);
             ImGui::MenuItem ("Show memory", nullptr, &showMemoryEditor);
             ImGui::EndMenu();
         }
@@ -116,6 +121,7 @@ void GUI::showRegisters() {
         ImGui::Text ("pb: %02X", g_snes.cpu.pb);
         ImGui::SameLine();
         ImGui::Text ("db: %02X", g_snes.cpu.db);
+        ImGui::Text ("Direct Page Offset: %04X", g_snes.cpu.dpOffset);
 
         // Fetch the PSW bits to display (We can't pass ImGui direct pointers, cause we use bitfields :( )
         bool shortAccumulator = g_snes.cpu.psw.shortAccumulator;
@@ -174,11 +180,27 @@ void GUI::showCartInfo() {
     }
 }
 
+void GUI::showDMAInfo() {
+    static const char* steps[] = { "Incrementing", "Fixed", "Decrementing", "Fixed" };
+    const auto params = Memory::dmaChannels[selectedDMAChannel].params();
+    const auto IOAddress = 0x2100 + Memory::dmaChannels[selectedDMAChannel].IOAddress();
+
+    if (ImGui::Begin("DMA Channels")) {
+        ImGui::Text ("Direction:      %s", params.direction ? "CPU to IO" : "IO to CPU");
+        ImGui::Text ("B-Bus Address:  %04X", IOAddress);
+        ImGui::Text ("HDMA Addr Mode: %s", params.addrMode ? "Direct table" : "Indirect table");
+        ImGui::Text ("A-bus step:     %s", steps[params.step]);
+        ImGui::Text ("Transfer unit:  %d", (u8) params.unitSelect);
+        ImGui::SliderInt("Channel", &selectedDMAChannel, 0, 7);
+        ImGui::End();
+    }
+}
+
 void GUI::showDisplay() {
     if (ImGui::Begin("Display")) {
         const auto size = ImGui::GetWindowSize();
-        const auto scale_x = size.x / 200.f;
-        const auto scale_y = size.y / 200.f;
+        const auto scale_x = size.x / 256.f;
+        const auto scale_y = size.y / 224.f;
         const auto scale = scale_x < scale_y ? scale_x : scale_y;
 
         display.update(g_snes.ppu.framebuffer.data());

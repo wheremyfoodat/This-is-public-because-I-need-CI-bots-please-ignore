@@ -40,6 +40,7 @@ add_executable(SNES
     src/memory.cpp
     src/cart.cpp
     src/snes.cpp
+    src/dma.cpp
     src/externals.cpp
 
     src/CPU/cpu.cpp

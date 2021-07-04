@@ -42,6 +42,7 @@ void Cartridge::getROMInfo (json& dbEntry) {
             irqVector = (rom[0x7FEF] << 8) | rom[0x7FEE];
         
         case Mappers::HiROM:
+        case Mappers::ExHiROM:
             resetVector = (rom[0xFFFD] << 8) | rom[0xFFFC];
             copVector = (rom[0xFFE5] << 8) | rom[0xFFE4];
             brkVector = (rom[0xFFE7] << 8) | rom[0xFFE6];

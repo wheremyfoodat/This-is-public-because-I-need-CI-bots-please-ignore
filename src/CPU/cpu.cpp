@@ -23,6 +23,7 @@ void CPU::executeOpcode (u8 opcode) {
     switch (opcode) {
         case 0x1B: tcs(); break;
         case 0x5B: tcd(); break;
+        case 0x8A: txa(); break;
         case 0x98: tya(); break;
         case 0x9A: txs(); break;
         case 0xA8: tay(); break;
@@ -55,6 +56,8 @@ void CPU::executeOpcode (u8 opcode) {
 
         case 0x88: dey(); break;
         case 0xCA: dex(); break;
+        case 0xC8: iny(); break;
+        case 0xE8: inx(); break;
 
         case 0x08: php(); break;
         case 0x4B: phk(); break;
@@ -83,6 +86,7 @@ void CPU::executeOpcode (u8 opcode) {
         case 0xC3: cmp <AddressingModes::Stack_relative>(); break;
         case 0xC5: cmp <AddressingModes::Direct>(); break;
         case 0xC7: cmp <AddressingModes::Direct_indirect_long>(); break;
+        case 0xC9: cmp_imm(); break;
         case 0xCD: cmp <AddressingModes::Absolute>(); break;
         case 0xCF: cmp <AddressingModes::Absolute_long>(); break;
         case 0xD1: cmp <AddressingModes::Direct_indirect_y>(); break;

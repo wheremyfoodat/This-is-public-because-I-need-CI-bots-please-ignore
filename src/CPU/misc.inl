@@ -27,15 +27,13 @@ void sei() {
     cycles = 2;
 }
 
-void phk() {
-    push8 (pb);
+void pushR8 (u8 value) {
+    push8 (value);
     cycles = 3;
 }
 
-void php() {
-    push8 (psw.raw);
-    cycles = 3;
-}
+void php() { pushR8 (psw.raw); }
+void phk() { pushR8 (pb); }
 
 void plb() {
     setDB (pop8 <true> ()); // Pop DB and set NZ flags
@@ -52,20 +50,18 @@ void sep() {
     cycles = 3;
 }
 
-void txs() {
-    sp = x;
+template <bool affectFlags>
+void transfer (u16& dest, u16 source) {
+    dest = source;
     cycles = 2;
+
+    if constexpr (affectFlags)
+        setNZ16 (source);
 }
 
-void tcd() {
-    dpOffset = a.raw;
-    cycles = 2;
-}
-
-void tcs() {
-    sp = a.raw;
-    cycles = 2;
-}
+void txs() { transfer <false> (sp, x); }
+void tcd() { transfer <true> (dpOffset, a.raw); }
+void tcs() { transfer <false> (sp, a.raw); }
 
 void tya() {
     if (psw.shortAccumulator) {
@@ -95,26 +91,16 @@ void tay() {
     cycles = 2;
 }
 
-void dex() {
-    x -= 1;
-
-    if (psw.shortIndex) {
-        x &= 0xFF;
-        setNZ8(x);
+void txa() {
+    if (psw.shortAccumulator) {
+        a.al = x & 0xFF;
+        setNZ8 (a.al);
+    }
+    
+    else {
+        a.raw = x;
+        setNZ16 (a.raw);
     }
 
-    else setNZ16(x);
-    cycles = 2;
-}
-
-void dey() {
-    y -= 1;
-
-    if (psw.shortIndex) {
-        y &= 0xFF;
-        setNZ8(y);
-    }
-
-    else setNZ16(y);
     cycles = 2;
 }

@@ -4,6 +4,7 @@
 #include <filesystem>
 #include "nlohmann/json.hpp"
 #include "PPU/ppu.hpp"
+#include "dma.hpp"
 #include "cart.hpp"
 #include "utils.hpp"
 
@@ -18,6 +19,7 @@ namespace Memory {
     extern json gameDB; // Our game database containing info about each game's cart
     extern Cartridge cart;
     extern PPU* ppu;
+    extern DMAChannel dmaChannels[8];
 
     // System memory
     extern std::array <u8, 128 * kilobyte> wram;
@@ -41,6 +43,11 @@ namespace Memory {
 
     template <bool isDebugger = false>
     void writeSlow (u32 address, u8 value);
+
+    template <bool isDebugger>
+    void writeIO (u16 address, u8 value);
+    
+    static void writeIODMA (u16 address, u8 value) { writeIO <false> (address, value); } // Hack to make the linker happy
 
     u8 read8Debugger (const u8* buffer, size_t address); // Frontend memory editor functions
     void write8Debugger (u8* buffer, size_t address, u8 data);

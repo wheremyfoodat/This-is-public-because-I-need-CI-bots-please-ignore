@@ -17,9 +17,8 @@ void SNES::reset() {
 }
 
 void SNES::runFrame() {
-    while (true) { // TODO: Make this actually run a frame and not until the heat death of the universe
+    for (auto i = 0; i < 50000; i++) // TODO: Make this actually run a frame and not until the heat death of the universe
         cpu.step();
-    }
 }
 
 void SNES::step() {

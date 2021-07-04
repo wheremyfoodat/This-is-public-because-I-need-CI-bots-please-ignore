@@ -12,29 +12,20 @@ void lda_imm() {
     }
 }
 
-void ldx_imm() {
+void ld_index_imm (u16& reg) {
     if (psw.shortIndex) {
-        x = nextByte();
+        reg = nextByte();
         cycles = 2;
     }
 
     else {
-        x = nextWord();
+        reg = nextWord();
         cycles = 3;
     }
 }
 
-void ldy_imm() {
-    if (psw.shortIndex) {
-        y = nextByte();
-        cycles = 2;
-    }
-
-    else {
-        y = nextWord();
-        cycles = 3;
-    }
-}
+void ldx_imm() { ld_index_imm(x); }
+void ldy_imm() { ld_index_imm(y); }
 
 template <AddressingModes addrMode>
 void sta() {
