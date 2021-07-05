@@ -3,7 +3,7 @@
 template <AddressingModes addrMode>
 void bit() {
     if (psw.shortAccumulator) {
-        const auto addr = getAddress <addrMode, u8>();
+        const auto addr = getAddress <addrMode, u8, AccessTypes::Read>();
         const auto val = Memory::read8 (addr);
 
         setNZ8 (val); // Set NZ depending on 8-bit value
@@ -11,11 +11,49 @@ void bit() {
     }
 
     else {
-        const auto addr = getAddress <addrMode, u16>();
+        const auto addr = getAddress <addrMode, u16, AccessTypes::Read>();
         const auto val = Memory::read16 (addr);
 
         setNZ16 (val); // Set NZ depending on 16-bit value
         psw.overflow = (val >> 14) & 1; // Set V depending on bit 14
+    }
+}
+
+template <AddressingModes addrMode>
+void ora() {
+    if (psw.shortAccumulator) {
+        const auto addr = getAddress <addrMode, u8, AccessTypes::Read>();
+        const auto val = Memory::read8 (addr);
+
+        a.al = a.al | val;
+        setNZ8 (a.al);
+    }
+
+    else {
+        const auto addr = getAddress <addrMode, u16, AccessTypes::Read>();
+        const auto val = Memory::read16 (addr);
+
+        a.raw = a.raw | val;
+        setNZ16 (a.raw); // Set NZ depending on 16-bit value
+    }
+}
+
+template <AddressingModes addrMode>
+void and_() {
+    if (psw.shortAccumulator) {
+        const auto addr = getAddress <addrMode, u8, AccessTypes::Read>();
+        const auto val = Memory::read8 (addr);
+
+        a.al = a.al & val;
+        setNZ8 (a.al);
+    }
+
+    else {
+        const auto addr = getAddress <addrMode, u16, AccessTypes::Read>();
+        const auto val = Memory::read16 (addr);
+
+        a.raw = a.raw & val;
+        setNZ16 (a.raw); // Set NZ depending on 16-bit value
     }
 }
 
@@ -51,41 +89,62 @@ void sbc_imm() {
 }
 
 template <AddressingModes addrMode>
-void cmp() {
-    if (psw.shortAccumulator) {
-        const auto addr = getAddress <addrMode, u8>();
+void compare (u16 reg, bool isShort) {
+    if (isShort) {
+        const auto addr = getAddress <addrMode, u8, AccessTypes::Read>();
         const auto val = Memory::read8 (addr);
         
-        setNZ8 (a.al - val);
-        psw.carry = a.al >= val;
+        const auto a = reg & 0xFF;
+        setNZ8 (a - val);
+        psw.carry = a >= val;
     }
 
     else {
-        const auto addr = getAddress <addrMode, u16>();
+        const auto addr = getAddress <addrMode, u16, AccessTypes::Read>();
         const auto val = Memory::read16 (addr);
 
-        setNZ16 (a.raw - val);
-        psw.carry = a.raw >= val;
+        setNZ16 (reg - val);
+        psw.carry = reg >= val;
     }
 }
 
-void cmp_imm() {
-    if (psw.shortAccumulator) {
+template <AddressingModes addrMode>
+void cmp() {
+    compare <addrMode> (a.raw, psw.shortAccumulator);
+}
+
+template <AddressingModes addrMode>
+void cpx() {
+    compare <addrMode> (x, psw.shortIndex);
+}
+
+template <AddressingModes addrMode>
+void cpy() {
+    compare <addrMode> (y, psw.shortIndex);
+}
+
+void compare_imm (u16 reg, bool isShort) {
+    if (isShort) {
         const auto val = nextByte();
-        
-        setNZ8 (a.al - val);
-        psw.carry = a.al >= val;
+        const auto a = reg & 0xFF;
+
+        setNZ8 (a - val);
+        psw.carry = a >= val;
         cycles = 2;
     }
 
     else {
         const auto val = nextWord();
 
-        setNZ16 (a.raw - val);
-        psw.carry = a.raw >= val;
+        setNZ16 (reg - val);
+        psw.carry = reg >= val;
         cycles = 3;
     }
 }
+
+void cmp_imm() { compare_imm (a.raw, psw.shortAccumulator); }
+void cpx_imm() { compare_imm (x, psw.shortIndex); }
+void cpy_imm() { compare_imm (y, psw.shortIndex); }
 
 void incIndex (u16& value) {
     value += 1;
@@ -95,7 +154,7 @@ void incIndex (u16& value) {
         setNZ8 (value);
     }
 
-    else setNZ8 (value);
+    else setNZ16 (value);
     cycles = 2;
 }
 
@@ -107,7 +166,7 @@ void decIndex (u16& value) {
         setNZ8 (value);
     }
 
-    else setNZ8 (value);
+    else setNZ16 (value);
     cycles = 2;
 }
 
@@ -115,3 +174,19 @@ void inx() { incIndex(x); }
 void iny() { incIndex(y); }
 void dex() { decIndex(x); }
 void dey() { decIndex(y); }
+
+void lsr_accumulator() {
+    psw.carry = a.raw & 1;
+
+    if (psw.shortAccumulator) {
+        a.al = a.al >> 1;
+        setNZ8 (a.al);
+    }
+
+    else {
+        a.raw >>= 1;
+        setNZ16 (a.raw);
+    }
+
+    cycles = 2;
+}

@@ -174,4 +174,8 @@ namespace Helpers {
         // TODO: Detect and support big endian systems
         *(T*)pointer = bswap(value);
     }
+
+    constexpr u8 get8BitColor (u8 color5) {
+        return(color5 << 3) | (color5 >> 2);
+    }
 }

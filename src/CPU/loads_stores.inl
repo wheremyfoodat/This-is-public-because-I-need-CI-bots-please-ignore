@@ -12,6 +12,25 @@ void lda_imm() {
     }
 }
 
+template <AddressingModes addrMode>
+void lda() {
+    if (psw.shortAccumulator) {
+        const auto address = getAddress <addrMode, u8, AccessTypes::Read>();
+        const auto val = Memory::read8(address);
+
+        a.al = val;
+        setNZ8 (val);
+    }
+
+    else {
+        const auto address = getAddress <addrMode, u16, AccessTypes::Read>();
+        const auto val = Memory::read16(address);
+
+        a.raw = val;
+        setNZ16 (val);
+    }
+}
+
 void ld_index_imm (u16& reg) {
     if (psw.shortIndex) {
         reg = nextByte();
@@ -28,53 +47,42 @@ void ldx_imm() { ld_index_imm(x); }
 void ldy_imm() { ld_index_imm(y); }
 
 template <AddressingModes addrMode>
-void sta() {
-    if (psw.shortAccumulator) {
-        const auto address = getAddress <addrMode, u8>();
-        Memory::write8 (address, a.al);
+void storeReg (u16 reg, bool isShort) {
+    if (isShort) {
+        const auto address = getAddress <addrMode, u8, AccessTypes::Write>();
+        Memory::write8 (address, reg & 0xFF);
     }
 
     else {
-        const auto address = getAddress <addrMode, u16>();
-        Memory::write16 (address, a.raw);
+        const auto address = getAddress <addrMode, u16, AccessTypes::Write>();
+        Memory::write16 (address, reg);
     }
+}
+
+template <AddressingModes addrMode>
+void sta() {
+    storeReg <addrMode> (a.raw, psw.shortAccumulator);
 }
 
 template <AddressingModes addrMode>
 void stx() {
-    if (psw.shortIndex) {
-        const auto address = getAddress <addrMode, u8>();
-        Memory::write8 (address, x);
-    }
-
-    else {
-        const auto address = getAddress <addrMode, u16>();
-        Memory::write16 (address, x);
-    }
+    storeReg <addrMode> (x, psw.shortIndex);
 }
 
 template <AddressingModes addrMode>
 void sty() {
-    if (psw.shortIndex) {
-        const auto address = getAddress <addrMode, u8>();
-        Memory::write8 (address, y);
-    }
-
-    else {
-        const auto address = getAddress <addrMode, u16>();
-        Memory::write16 (address, y);
-    }
+    storeReg <addrMode> (y, psw.shortIndex);
 }
 
 template <AddressingModes addrMode>
 void stz() {
     if (psw.shortAccumulator) {
-        const auto address = getAddress <addrMode, u8>();
+        const auto address = getAddress <addrMode, u8, AccessTypes::Write>();
         Memory::write8 (address, 0);
     }
 
     else {
-        const auto address = getAddress <addrMode, u16>();
+        const auto address = getAddress <addrMode, u16, AccessTypes::Write>();
         Memory::write16 (address, 0);
     }
 }

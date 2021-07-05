@@ -30,6 +30,7 @@ namespace Memory {
 
     static std::array <uint8_t*, pageCount> pageTableRead; // Page table for reads
     static std::array <uint8_t*, pageCount> pageTableWrite; // Page table for writes
+    static u32 wramAddress = 0;
 
     void loadROM (std::filesystem::path directory);
     u8 read8 (u32 address); // Memory read handlers

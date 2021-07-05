@@ -150,12 +150,20 @@ static void Memory::writeIO (u16 address, u8 value) {
         case 0x2105: ppu->bgmode.raw = value; break;
         case 0x2106: Helpers::warn ("Unimplemented write to mosaic register (val: {:02X})\n", value); break;
 
-        case 0x2107: Helpers::warn ("Unimplemented write to BG1SC (val: {:02X})\n", value); break;
-        case 0x2108: Helpers::warn ("Unimplemented write to BG2SC (val: {:02X})\n", value); break;
-        case 0x2109: Helpers::warn ("Unimplemented write to BG3SC (val: {:02X})\n", value); break;
-        case 0x210A: Helpers::warn ("Unimplemented write to BG4SC (val: {:02X})\n", value); break;
-        case 0x210B: Helpers::warn ("Unimplemented write to BG12NBA (val: {:02X})\n", value); break;
-        case 0x210C: Helpers::warn ("Unimplemented write to BG34NBA (val: {:02X})\n", value); break;
+        case 0x2107: ppu->sc[0].raw = value; break; // BG1SC
+        case 0x2108: ppu->sc[1].raw = value; break; // BG2SC
+        case 0x2109: ppu->sc[2].raw = value; break; // BG3SC
+        case 0x210A: ppu->sc[3].raw = value; break; // BG4SC
+
+        case 0x210B: // BG12NBA 
+            ppu->nba[0] = value & 0xF; 
+            ppu->nba[1] = value >> 4;
+            break;
+            
+        case 0x210C: // BG34NBA 
+            ppu->nba[2] = value & 0xF; 
+            ppu->nba[3] = value >> 4;
+            break;
 
         case 0x2115: // VMAIN
             ppu->vmain.raw = value;
@@ -164,6 +172,9 @@ static void Memory::writeIO (u16 address, u8 value) {
                 case 1: ppu->vramStep = 32; break;
                 default: ppu->vramStep = 128; break;
             }
+
+            if (value & 0b1100) // Check if VRAM address translation was enabled and panic
+                Helpers::panic ("VRAM address translation\n");
 
             break;
 
@@ -186,13 +197,40 @@ static void Memory::writeIO (u16 address, u8 value) {
                 ppu->vmaddr.raw += ppu->vramStep;
         } break;
 
+        case 0x2121: // CGADD
+            ppu->paletteAddr = value;
+            ppu->paletteLatch = false;
+            break;
+
+        case 0x2122: { // CGDATA
+            if (ppu->paletteLatch) {
+                const auto palette = ((value & 0x7F) << 8) | ppu->latchedPalette; // MSB of palette is ignored
+                ppu->paletteRAM[ppu->paletteAddr] = palette;
+                ppu->paletteAddr++; 
+            }
+
+            else
+                ppu->latchedPalette = value;
+
+            ppu->paletteLatch = !ppu->paletteLatch;
+        } break;
+
+        case 0x2180: // WMDATA
+            wram[wramAddress++] = value;
+            wramAddress &= 0x1FFFF;
+            break;
+
+        case 0x2181: wramAddress = (wramAddress & ~0xFF) | value; break; // WMADDL
+        case 0x2182: wramAddress = (wramAddress & ~0xFF00) | (value << 8); break; // WMADDM;
+        case 0x2183: wramAddress = (wramAddress & 0xFFFF) | ((value & 1) << 16); break; // WMADDH
+
         case 0x420B: // MDMAEN
             for (auto i = 0; i < 8; i++) {
                 if (value & (1 << i)) // Each of the 8 bits signifies whether a DMA channel should fire a GPDMA
                     doGPDMA (i);
             }
-
             break;
+
 
         case 0x420D: Helpers::warn ("Unimplemented write to MEMSEL (val: {:02X})\n", value); break;
 

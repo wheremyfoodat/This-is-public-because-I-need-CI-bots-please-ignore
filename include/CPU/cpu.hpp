@@ -84,6 +84,16 @@ private:
         return val;
     }
 
+    template <bool setFlags>
+    u16 pop16() {
+        u16 val = pop8<false>();
+        val |= pop8<false>() << 8;
+
+        if constexpr (setFlags)
+            setNZ16 (val);
+        return val;
+    }
+
     void push8 (u8 value) {
         Memory::write8 (sp, value);
         sp -= 1;

@@ -32,6 +32,13 @@ union VMain {
     BitField <7, 1, u8> incrementOnHigh; // Increment VRAM Address after accessing High/Low byte (0=Low, 1=High)
 };
 
+union BGSC {
+    u8 raw = 0;
+
+    BitField <2, 6, u8> base; // SC Base Address in VRAM (in 1K-word steps, aka 2K-byte steps)
+    BitField <0, 2, u8> size; // SC Size (0=One-Screen, 1=V-Mirror, 2=H-Mirror, 3=Four-Screen)
+};
+
 class PPU {
 public:
     OAMAddr oamaddr;
@@ -39,13 +46,25 @@ public:
     BGMode bgmode;
     VMain vmain;
 
+    BGSC sc[4]; // Screen Base and Screen Size registers
+    uint8_t nba[4]; // BG Character Data Area Designation
+
     u8 rdnmi = 0;
     u16 vramStep = 0; // Depending on vmain.step, this can be 1, 32 or 128
 
     std::array <u8, 256 * 224 * 4> framebuffer; // TODO: Actual coords
     std::array <u16, 0x8000> vram; // The VRAM. Note: This is 16-bit addressed, hence why the array is made of u16's. TODO: Put on heap?
+    std::array <u16, 256> paletteRAM; // Palette RAM, addressed in words again
+
+    u8 paletteAddr = 0; // The address in palette RAM we'll write to
+    u8 latchedPalette = 0; // The LSB of a palette is latched and written on the second palette RAM write
+    bool paletteLatch = false; // Tracks if this is the first or second palette RAM access
+
+    int line = 0; // Line we're currently rendering
 
     PPU() {
         framebuffer.fill (0xFF);
     }
+
+    void renderScanline();
 };

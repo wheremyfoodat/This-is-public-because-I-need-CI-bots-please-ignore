@@ -12,20 +12,13 @@ void xce() {
     cycles = 2;
 }
 
-void sec() {
-    psw.carry = true;
-    cycles = 2;
-}
-
-void clc() {
-    psw.carry = false;
-    cycles = 2;
-}
-
-void sei() {
-    psw.irqDisable = true;
-    cycles = 2;
-}
+void sec() { psw.carry = true; cycles = 2; }
+void clc() { psw.carry = false; cycles = 2; }
+void sei() { psw.irqDisable = true; cycles = 2; }
+void cli() { psw.irqDisable = false; cycles = 2; }
+void cld() { psw.decimal = false; cycles = 2; }
+void sed() { psw.decimal = true; cycles = 2; }
+void clv() { psw.overflow = false; cycles = 2;}
 
 void pushR8 (u8 value) {
     push8 (value);
@@ -36,8 +29,25 @@ void php() { pushR8 (psw.raw); }
 void phk() { pushR8 (pb); }
 
 void plb() {
-    setDB (pop8 <true> ()); // Pop DB and set NZ flags
+    setDB (pop8<true>()); // Pop DB and set NZ flags
     cycles = 4;
+}
+
+void pla() {
+    if (psw.shortAccumulator) {
+        a.al = pop8<true>();
+        cycles = 4;
+    }
+
+    else {
+        a.raw = pop16<true>();
+        cycles = 5;
+    }
+}
+
+void pea() {
+    push16(nextWord());
+    cycles = 5;
 }
 
 void rep() {
