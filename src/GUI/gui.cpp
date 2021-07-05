@@ -137,6 +137,7 @@ void GUI::showRegisters() {
         bool overflow = g_snes.cpu.psw.overflow;
         bool emulationMode = g_snes.cpu.emulationMode;
 
+        ImGui::Text ("PSW: %02X", g_snes.cpu.psw.raw);
         ImGui::Checkbox ("8-bit accumulator", &shortAccumulator);
         ImGui::SameLine();
         ImGui::Checkbox ("8-bit indexes    ", &shortIndex);

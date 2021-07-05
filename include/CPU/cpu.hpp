@@ -131,6 +131,7 @@ private:
     // Instruction definitions are in inline header file because so templates don't anger the linker
     #include "../../src/CPU/addressing_modes.inl"
     #include "../../src/CPU/loads_stores.inl"
+    #include "../../src/CPU/interrupts.inl"
     #include "../../src/CPU/branches.inl"
     #include "../../src/CPU/misc.inl"
     #include "../../src/CPU/alu.inl"

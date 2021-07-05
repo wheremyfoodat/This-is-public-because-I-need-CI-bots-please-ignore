@@ -6,7 +6,8 @@ void bit() {
         const auto addr = getAddress <addrMode, u8, AccessTypes::Read>();
         const auto val = Memory::read8 (addr);
 
-        setNZ8 (val); // Set NZ depending on 8-bit value
+        psw.zero = (a.al & val) == 0;
+        psw.sign = val >> 7;
         psw.overflow = (val >> 6) & 1; // Set V depending on bit 6
     }
 
@@ -14,7 +15,8 @@ void bit() {
         const auto addr = getAddress <addrMode, u16, AccessTypes::Read>();
         const auto val = Memory::read16 (addr);
 
-        setNZ16 (val); // Set NZ depending on 16-bit value
+        psw.zero = (a.raw & val) == 0;
+        psw.sign = val >> 15;
         psw.overflow = (val >> 14) & 1; // Set V depending on bit 14
     }
 }
@@ -38,6 +40,62 @@ void ora() {
     }
 }
 
+void ora_imm() {
+    if (psw.shortAccumulator) {
+        const auto val = nextByte();
+
+        a.al = a.al | val;
+        setNZ8 (a.al);
+        cycles = 2;
+    }
+
+    else {
+        const auto val = nextWord();
+
+        a.raw = a.raw | val;
+        setNZ16 (a.raw); // Set NZ depending on 16-bit value
+        cycles = 3;
+    }
+}
+
+template <AddressingModes addrMode>
+void eor() {
+    if (psw.shortAccumulator) {
+        const auto addr = getAddress <addrMode, u8, AccessTypes::Read>();
+        const auto val = Memory::read8 (addr);
+
+        a.al = a.al ^ val;
+        setNZ8 (a.al);
+    }
+
+    else {
+        const auto addr = getAddress <addrMode, u16, AccessTypes::Read>();
+        const auto val = Memory::read16 (addr);
+
+        a.raw = a.raw ^ val;
+        setNZ16 (a.raw); // Set NZ depending on 16-bit value
+    }
+}
+
+void eor_imm() {
+    if (psw.shortAccumulator) {
+        const auto val = nextByte();
+
+        a.al = a.al ^ val;
+        setNZ8 (a.al);
+        cycles = 2;
+    }
+
+    else {
+        const auto val = nextWord();
+
+        a.raw = a.raw ^ val;
+        setNZ16 (a.raw); // Set NZ depending on 16-bit value
+        cycles = 3;
+    }
+}
+
+
 template <AddressingModes addrMode>
 void and_() {
     if (psw.shortAccumulator) {
@@ -56,6 +114,55 @@ void and_() {
         setNZ16 (a.raw); // Set NZ depending on 16-bit value
     }
 }
+
+void and_imm() {
+    if (psw.shortAccumulator) {
+        const auto val = nextByte();
+
+        a.al = a.al & val;
+        setNZ8 (a.al);
+        cycles = 2;
+    }
+
+    else {
+        const auto val = nextWord();
+
+        a.raw = a.raw & val;
+        setNZ16 (a.raw); // Set NZ depending on 16-bit value
+        cycles = 3;
+    }
+}
+
+void adc_imm() {
+    if (psw.shortAccumulator) {
+        cycles = 2;
+        const auto operand = nextByte(); // Invert the subtrahend and treat operation as addition
+        u16 result = (u16) a.al + (u16) psw.carry + (u16) operand;
+
+        psw.carry = result >> 8; // Branchless carry calculation
+        result &= 0xFF;
+        psw.overflow = ((a.al ^ result) & (operand ^ result)) >> 7; // Fast signed overflow calculation
+        setNZ8 (result);
+
+        a.al = result;
+        if (psw.decimal) Helpers::panic ("Decimal mode 8-bit ADC");
+    }
+
+    else {
+        cycles = 3;
+        const auto operand = nextWord();
+        u32 result = (u32) a.raw + (u32) psw.carry + (u32) operand;
+
+        psw.carry = result >> 16; // Branchless carry calculation
+        result &= 0xFFFF;
+        psw.overflow = ((a.raw ^ result) & (operand ^ result)) >> 15; // Fast signed overflow calculation
+        setNZ16 (result);
+
+        a.raw = result;
+        if (psw.decimal) Helpers::panic ("Decimal mode 16-bit ADC");
+    }
+}
+
 
 void sbc_imm() {
     if (psw.shortAccumulator) {
@@ -83,7 +190,6 @@ void sbc_imm() {
         setNZ16 (result);
 
         a.raw = result;
-
         if (psw.decimal) Helpers::panic ("Decimal mode 16-bit SBC");
     }
 }
@@ -94,7 +200,7 @@ void compare (u16 reg, bool isShort) {
         const auto addr = getAddress <addrMode, u8, AccessTypes::Read>();
         const auto val = Memory::read8 (addr);
         
-        const auto a = reg & 0xFF;
+        const u8 a = reg & 0xFF;
         setNZ8 (a - val);
         psw.carry = a >= val;
     }
@@ -126,7 +232,7 @@ void cpy() {
 void compare_imm (u16 reg, bool isShort) {
     if (isShort) {
         const auto val = nextByte();
-        const auto a = reg & 0xFF;
+        const u8 a = reg & 0xFF;
 
         setNZ8 (a - val);
         psw.carry = a >= val;

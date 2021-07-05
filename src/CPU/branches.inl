@@ -58,3 +58,10 @@ void rts() {
     pc = pop16<false>() + 1; // JSR pushes the return address - 1, while rts jump to the popped address + 1
     cycles = 6;
 }
+
+void rtl() {
+    pc = pop16<false>() + 1; // JSR pushes the return address - 1, while rts jump to the popped address + 1
+    setPB (pop8<false>());
+    
+    cycles = 6;
+}

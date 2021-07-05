@@ -31,6 +31,35 @@ void lda() {
     }
 }
 
+template <AddressingModes addrMode>
+void ld_index (u16& reg) {
+    if (psw.shortIndex) {
+        const auto address = getAddress <addrMode, u8, AccessTypes::Read>();
+        const auto val = Memory::read8(address);
+
+        reg = val;
+        setNZ8 (val);
+    }
+
+    else {
+        const auto address = getAddress <addrMode, u16, AccessTypes::Read>();
+        const auto val = Memory::read16(address);
+
+        reg = val;
+        setNZ16 (val);
+    }
+}
+
+template <AddressingModes addrMode>
+void ldx() {
+    ld_index <addrMode>(x);
+}
+
+template <AddressingModes addrMode>
+void ldy() {
+    ld_index <addrMode>(y);
+}
+
 void ld_index_imm (u16& reg) {
     if (psw.shortIndex) {
         reg = nextByte();

@@ -1,5 +1,11 @@
 #pragma once
 
+void wdm() {
+    Helpers::warn ("Encountered WDM at PC {:04X}\n", pc - 1);
+    pc += 1;
+    cycles = 2;
+}
+
 // Exchange carry and emulation mode flags
 void xce() {
     const auto tmp = emulationMode;
@@ -27,11 +33,87 @@ void pushR8 (u8 value) {
 
 void php() { pushR8 (psw.raw); }
 void phk() { pushR8 (pb); }
+void phb() { pushR8 (db); }
+void phd() {
+    push16 (dpOffset);
+    cycles = 4;
+}
 
 void plb() {
     setDB (pop8<true>()); // Pop DB and set NZ flags
     cycles = 4;
 }
+
+void plp() {
+    setPSW (pop8<false>());
+    Helpers::warn ("PLP at {:04X} Loaded: {:02X}", pc, psw.raw);
+    cycles = 4;
+}
+
+void pld() {
+    dpOffset = pop16<true>();
+    cycles = 5;
+}
+
+void pha() {
+    if (psw.shortAccumulator) {
+        push8 (a.al);
+        cycles = 3;
+    }
+
+    else {
+        push16 (a.raw);
+        cycles = 4;
+    }
+}
+
+void phx() {
+    if (psw.shortIndex) {
+        push8 (x);
+        cycles = 3;
+    }
+
+    else {
+        push16 (x);
+        cycles = 4;
+    }
+}
+
+void phy() {
+    if (psw.shortIndex) {
+        push8 (y);
+        cycles = 3;
+    }
+
+    else {
+        push16 (y);
+        cycles = 4;
+    }
+}
+
+void plx() {
+    if (psw.shortIndex) {
+        x = pop8 <true>();
+        cycles = 4;
+    }
+
+    else {
+        x = pop16<true>();
+        cycles = 5;
+    }
+} 
+
+void ply() {
+    if (psw.shortIndex) {
+        y = pop8 <true>();
+        cycles = 4;
+    }
+
+    else {
+        y = pop16<true>();
+        cycles = 5;
+    }
+} 
 
 void pla() {
     if (psw.shortAccumulator) {
@@ -48,6 +130,23 @@ void pla() {
 void pea() {
     push16(nextWord());
     cycles = 5;
+}
+
+void pei() {
+    const auto pointer = (u32) nextByte() + (u32) dpOffset;
+    push16(Memory::read16(pointer));
+
+    if (dpOffset & 0xFF) // Add a cycle if the low byte of d is non-zero
+        cycles = 7;
+    else 
+        cycles = 6;
+}
+
+void per() {
+    const auto offset = (s16) nextWord();
+    push16 (pc + offset);
+
+    cycles = 6;
 }
 
 void rep() {

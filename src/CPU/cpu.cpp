@@ -47,6 +47,8 @@ void CPU::executeOpcode (u8 opcode) {
         case 0xA0: ldy_imm(); break;
         case 0xA2: ldx_imm(); break;
 
+        case 0xA6: ldx <AddressingModes::Direct>(); break;
+
         case 0x84: sty <AddressingModes::Direct>(); break;
         case 0x8C: sty <AddressingModes::Absolute>(); break;
         case 0x94: sty <AddressingModes::Direct_x>(); break;
@@ -78,10 +80,21 @@ void CPU::executeOpcode (u8 opcode) {
         case 0xE8: inx(); break;
 
         case 0x08: php(); break;
+        case 0x0B: phd(); break;
+        case 0x28: plp(); break;
+        case 0x2B: pld(); break;
         case 0x4B: phk(); break;
+        case 0x48: pha(); break;
+        case 0x5A: phy(); break;
+        case 0x62: per(); break;
         case 0x68: pla(); break;
+        case 0x7A: ply(); break;
+        case 0x8B: phb(); break;
+        case 0xDA: phx(); break;
         case 0xAB: plb(); break;
+        case 0xD4: pei(); break;
         case 0xF4: pea(); break;
+        case 0xFA: plx(); break;
 
         case 0x24: bit <AddressingModes::Direct>(); break;
         case 0x2C: bit <AddressingModes::Absolute>(); break;
@@ -101,6 +114,7 @@ void CPU::executeOpcode (u8 opcode) {
         
         case 0x4C: jmp <AddressingModes::Absolute>(); break;
         case 0x5C: jmp <AddressingModes::Absolute_long>(); break;
+        case 0x6C: jmp <AddressingModes::Absolute_indirect>(); break;
         case 0x7C: jmp <AddressingModes::Absolute_indirect_x>(); break;
         case 0xDC: jmp <AddressingModes::Absolute_indirect_long>(); break;
 
@@ -109,11 +123,13 @@ void CPU::executeOpcode (u8 opcode) {
         case 0xFC: jsr <AddressingModes::Absolute_indirect_x>(); break;
 
         case 0x60: rts(); break;
+        case 0x6B: rtl(); break;
 
         case 0x01: ora <AddressingModes::Direct_indirect_x>(); break;
         case 0x03: ora <AddressingModes::Stack_relative>(); break;
         case 0x05: ora <AddressingModes::Direct>(); break;
         case 0x07: ora <AddressingModes::Direct_indirect_long>(); break;
+        case 0x09: ora_imm(); break;
         case 0x0D: ora <AddressingModes::Absolute>(); break;
         case 0x0F: ora <AddressingModes::Absolute_long>(); break;
         case 0x11: ora <AddressingModes::Direct_indirect_y>(); break;
@@ -129,6 +145,7 @@ void CPU::executeOpcode (u8 opcode) {
         case 0x23: and_ <AddressingModes::Stack_relative>(); break;
         case 0x25: and_ <AddressingModes::Direct>(); break;
         case 0x27: and_ <AddressingModes::Direct_indirect_long>(); break;
+        case 0x29: and_imm(); break;
         case 0x2D: and_ <AddressingModes::Absolute>(); break;
         case 0x2F: and_ <AddressingModes::Absolute_long>(); break;
         case 0x31: and_ <AddressingModes::Direct_indirect_y>(); break;
@@ -139,6 +156,22 @@ void CPU::executeOpcode (u8 opcode) {
         case 0x39: and_ <AddressingModes::Absolute_y>(); break;
         case 0x3D: and_ <AddressingModes::Absolute_x>(); break;
         case 0x3F: and_ <AddressingModes::Absolute_long_x>(); break;
+
+        case 0x41: eor <AddressingModes::Direct_indirect_x>(); break;
+        case 0x43: eor <AddressingModes::Stack_relative>(); break;
+        case 0x45: eor <AddressingModes::Direct>(); break;
+        case 0x47: eor <AddressingModes::Direct_indirect_long>(); break;
+        case 0x49: eor_imm(); break;
+        case 0x4D: eor <AddressingModes::Absolute>(); break;
+        case 0x4F: eor <AddressingModes::Absolute_long>(); break;
+        case 0x51: eor <AddressingModes::Direct_indirect_y>(); break;
+        case 0x52: eor <AddressingModes::Direct_indirect>(); break;
+        case 0x53: eor <AddressingModes::Stack_relative_indirect_indexed>(); break;
+        case 0x55: eor <AddressingModes::Direct_x>(); break;
+        case 0x57: eor <AddressingModes::Direct_indirect_long_y>(); break;
+        case 0x59: eor <AddressingModes::Absolute_y>(); break;
+        case 0x5D: eor <AddressingModes::Absolute_x>(); break;
+        case 0x5F: eor <AddressingModes::Absolute_long_x>(); break;
 
         case 0xC1: cmp <AddressingModes::Direct_indirect_x>(); break;
         case 0xC3: cmp <AddressingModes::Stack_relative>(); break;
@@ -163,6 +196,7 @@ void CPU::executeOpcode (u8 opcode) {
         case 0xE4: cpx <AddressingModes::Direct>(); break;
         case 0xEC: cpx <AddressingModes::Absolute>(); break;
 
+        case 0x69: adc_imm(); break;
         case 0xE9: sbc_imm(); break;
 
         case 0x18: clc(); break;
@@ -175,6 +209,13 @@ void CPU::executeOpcode (u8 opcode) {
         case 0xE2: sep(); break;
         case 0xF8: sed(); break;
         case 0xFB: xce(); break;
+
+        case 0x00: brk(); break;
+        case 0x02: cop(); break;
+        case 0x40: rti(); break;
+        case 0x42: wdm(); break;
+        case 0xCB: wai(); break;
+        case 0xDB: stp(); break;
 
         case 0xEA: cycles = 2; break; // NOP
 
