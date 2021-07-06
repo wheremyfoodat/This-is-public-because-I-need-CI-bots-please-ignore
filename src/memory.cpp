@@ -114,14 +114,15 @@ static u8 Memory::readSlow (u32 address) {
 
     if (bank <= 0x3F || (bank >= 0x80 && bank <= 0xBF)) { // See if the address is in system area
         switch (addr) {
-            case 0x4210: // rdnmi
-                //Helpers::warn ("Read from RDNMI (stubbed)\n");
-                return ppu->rdnmi;
+            case 0x4210: { // rdnmi
+                const auto val = ppu->rdnmi;
+                ppu->rdnmi &= 0x7F; // Reading from rdnmi acknowledges the NMI and turns bit 7 off
+                return val;
+            }
 
             case 0x4212: // hvbjoy
-                //Helpers::warn ("Read from HVBJOY (stubbed)\n");
-                Joypads::hvbjoy ^= 1;
-                return rand();
+                ppu->hvbjoy ^= 1; // We're stubbing the low bit
+                return ppu->hvbjoy;
                 
             // Automatic reading Joypad ports
             case 0x4218: return Joypads::pad1 & 0xFF; // Joypad 1 (Low) 

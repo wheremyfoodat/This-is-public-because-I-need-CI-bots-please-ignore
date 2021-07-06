@@ -54,6 +54,7 @@ public:
     uint8_t nba[4]; // BG Character Data Area Designation
 
     u8 rdnmi = 0x7F;
+    u8 hvbjoy = 0;
     u16 vramStep = 0; // Depending on vmain.step, this can be 1, 32 or 128
 
     std::array <u8, 256 * 224 * 4> framebuffer; // TODO: Actual coords

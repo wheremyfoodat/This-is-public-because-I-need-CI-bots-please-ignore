@@ -39,6 +39,7 @@ public:
     u16 y = 0;
 
     bool emulationMode = true; // Just a stub. We don't actually emulate this because nothing uses it
+    u32 cycles = 0; // Cycles last instruction took
 
     void step();
     void reset();
@@ -46,7 +47,6 @@ public:
 private:
     u32 pbOffset = 0; // pb << 16 and db << 16 respectively
     u32 dbOffset = 0; // Used so we don't have to shift on every memory access
-    u32 cycles = 0; // CYcles last instruction took
 
     // Reads a byte from memory[pb:pc] and increments pc by 1
     u8 nextByte() {

@@ -77,9 +77,11 @@ void GUI::showMenuBar() {
                 "SNES ROMs",
                 0);
 
-            auto path = (file == nullptr) ? std::filesystem::path("") : std::filesystem::path(file); // Check if file dialog was canceled
-            Memory::loadROM (path);
-            g_snes.reset();
+            if (file != nullptr) {  // Check if file dialog was canceled
+                auto path = std::filesystem::path(file);
+                Memory::loadROM (path);
+                g_snes.reset();
+            }
         }
 
         if (ImGui::BeginMenu("Emulation")) {

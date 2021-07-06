@@ -17,7 +17,6 @@ DMAChannel Memory::dmaChannels[8];
 std::array <u8, 128 * Memory::kilobyte> Memory::wram;
 
 // Joypad.hpp
-u8 Joypads::hvbjoy = 0;
 u16 Joypads::pad1 = 0;
 
 // snes.hpp

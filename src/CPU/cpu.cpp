@@ -48,6 +48,7 @@ void CPU::executeOpcode (u8 opcode) {
         case 0xA2: ldx_imm(); break;
 
         case 0xA6: ldx <AddressingModes::Direct>(); break;
+        case 0xAE: ldx <AddressingModes::Absolute>(); break;
 
         case 0x84: sty <AddressingModes::Direct>(); break;
         case 0x8C: sty <AddressingModes::Absolute>(); break;

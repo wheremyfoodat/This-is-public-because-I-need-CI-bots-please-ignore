@@ -3,7 +3,6 @@
 #include "utils.hpp"
 
 namespace Joypads {
-    extern u8 hvbjoy;
     extern u16 pad1;
 
     const sf::Keyboard::Key keyMappings[] = {
