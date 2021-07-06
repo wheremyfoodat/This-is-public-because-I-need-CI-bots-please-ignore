@@ -115,9 +115,17 @@ static u8 Memory::readSlow (u32 address) {
     if (bank <= 0x3F || (bank >= 0x80 && bank <= 0xBF)) { // See if the address is in system area
         switch (addr) {
             case 0x4210: // rdnmi
-                ppu->rdnmi ^= 0x80;
-                Helpers::warn ("Read from RDNMI (stubbed)\n");
+                //Helpers::warn ("Read from RDNMI (stubbed)\n");
                 return ppu->rdnmi;
+
+            case 0x4212: // hvbjoy
+                //Helpers::warn ("Read from HVBJOY (stubbed)\n");
+                Joypads::hvbjoy ^= 1;
+                return rand();
+                
+            // Automatic reading Joypad ports
+            case 0x4218: return Joypads::pad1 & 0xFF; // Joypad 1 (Low) 
+            case 0x4219: return Joypads::pad1 >> 8; // Joypad 1 (high)
 
             default: Helpers::panic ("Read from unimplemented slow address {:06X}", address);
         }
@@ -163,6 +171,46 @@ static void Memory::writeIO (u16 address, u8 value) {
         case 0x210C: // BG34NBA 
             ppu->nba[2] = value & 0xF; 
             ppu->nba[3] = value >> 4;
+            break;
+
+        case 0x210D: // BG1HOFS / M7HOFS // TODO: Mode 7
+            ppu->hofs[0] = (value << 8) | (ppu->old_hofs[0] & ~7) | ((ppu->hofs[0] >> 8) & 7);
+            ppu->old_hofs[0] = value;
+            break;
+
+        case 0x210E: // BG1VOFS / M7VOFS // TODO: Mode 7
+            ppu->vofs[0] = (value << 8) | ppu->old_vofs[0];
+            ppu->old_vofs[0] = value;
+            break;
+
+        case 0x210F: // BG2HOFS
+            ppu->hofs[1] = (value << 8) | (ppu->old_hofs[1] & ~7) | ((ppu->hofs[1] >> 8) & 7);
+            ppu->old_hofs[1] = value;
+            break;
+
+        case 0x2110: // BG2VOFS
+            ppu->vofs[1] = (value << 8) | ppu->old_vofs[1];
+            ppu->old_vofs[1] = value;
+            break;
+
+        case 0x2111: // BG3HOFS
+            ppu->hofs[2] = (value << 8) | (ppu->old_hofs[2] & ~7) | ((ppu->hofs[2] >> 8) & 7);
+            ppu->old_hofs[2] = value;
+            break;
+
+        case 0x2112: // BG3VOFS
+            ppu->vofs[2] = (value << 8) | ppu->old_vofs[2];
+            ppu->old_vofs[2] = value;
+            break;
+
+        case 0x2113: // BG4HOFS
+            ppu->hofs[3] = (value << 8) | (ppu->old_hofs[3] & ~7) | ((ppu->hofs[3] >> 8) & 7);
+            ppu->old_hofs[3] = value;
+            break;
+
+        case 0x2114: // BG4VOFS
+            ppu->vofs[3] = (value << 8) | ppu->old_vofs[3];
+            ppu->old_vofs[3] = value;
             break;
 
         case 0x2115: // VMAIN

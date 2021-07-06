@@ -59,6 +59,12 @@ public:
     std::array <u8, 256 * 224 * 4> framebuffer; // TODO: Actual coords
     std::array <u16, 0x8000> vram; // The VRAM. Note: This is 16-bit addressed, hence why the array is made of u16's. TODO: Put on heap?
     std::array <u16, 256> paletteRAM; // Palette RAM, addressed in words again
+    
+    u16 vofs[4] = { 0, 0, 0, 0 };
+    u8 old_vofs[4] = { 0, 0, 0, 0 }; // Needed due to how VOFS writes work
+
+    u16 hofs[4] = { 0, 0, 0, 0 };
+    u16 old_hofs[4] = { 0, 0, 0, 0 }; // Needed due to how HOFS writes work
 
     u8 paletteAddr = 0; // The address in palette RAM we'll write to
     u8 latchedPalette = 0; // The LSB of a palette is latched and written on the second palette RAM write

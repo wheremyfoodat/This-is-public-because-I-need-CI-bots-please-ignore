@@ -20,10 +20,13 @@ void SNES::runFrame() {
     for (auto i = 0; i < 50000; i++) // TODO: Make this actually run a frame and not until the heat death of the universe
         cpu.step();
 
-    for (auto i = 0; i < 224; i++) { // HACK
+    for (auto i = 0; i < 224; i++) { // HACK FIX THIS ASAP SUPER BROKEN
         ppu.renderScanline();
         ppu.line = i;
     }
+
+    ppu.rdnmi ^= 0x80; // HACK
+    Joypads::update(); // Update pads
 }
 
 void SNES::step() {

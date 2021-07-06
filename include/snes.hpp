@@ -4,6 +4,7 @@
 #include "CPU/cpu.hpp"
 #include "PPU/ppu.hpp"
 #include "memory.hpp"
+#include "joypad.hpp"
 
 class SNES {
 public:

@@ -7,8 +7,8 @@ void PPU::renderBG() {
     constexpr int index = number - 1; // BGs are numbered 1-4 but array indices start at 0
 
     const auto bgSize = sc[index].size;
-    const auto ypos = line; // TODO: HOFS
-    unsigned xpos = 0; // TODO: VOFS here
+    unsigned ypos = line + vofs[index]; // TODO: VOFS
+    unsigned xpos = hofs[index]; // TODO: HOFS here
 
     auto tileDataStart = nba[index] << 12; // Multiply base address by 4096 K-Words
     auto bgMapStart = (u32) sc[index].base;
@@ -16,7 +16,15 @@ void PPU::renderBG() {
     bgMapStart &= 0x1F; // Mask out top bit
     bgMapStart <<= 10; // Multiply by 1024 K-Words
 
-    if (bgSize) Helpers::panic ("BG with non-0 size\n");
+    if ((ypos & 0x1FF) > 255) {
+        switch (bgSize) {
+            case 0: break;
+            case 2: bgMapStart += 0x400; break; // Handle 64-tile-tall background sizes
+            case 3: bgMapStart += 0x800; break; // On 64x64 BG maps, we need to offset the BG map by 0x800 instead of 0x400, because the tile map is 64 tiles wide instead of 32
+            
+            default: Helpers::panic ("Unimplemented BG size {}\n", bgSize);
+        }
+    }
 
     auto frameBufferIndex = line * 256 * 4; // The screen is 256 pixels wide, each pixel being 4 bytes
     const auto tileY = ypos & 7; // Which line of the tile are we in?
@@ -29,8 +37,11 @@ void PPU::renderBG() {
         const auto tileX = xpos & 7; // Which column of the tile are we in?
         
         if (x == 0 || tileX == 0) { // Fetch the information for a new tile if we need to (IE if we got to the end of a tile, or if we just started rendering)
-            const auto tileMapAddr = ((ypos >> 3) << 5) + (xpos >> 3) + bgMapStart;
-
+            xpos &= 0xFF; // Wrap x coordinate to 8 bits
+            const auto tileMapAddr = (((ypos >> 3) & 31) << 5) + (xpos>> 3) + bgMapStart; // >> 3: Divide ypos by 8 to see which row on the tilemap we're at
+                                                                                           // & 31: Mask the row number by 31 - After all, the tile map is simply 1 or more 32x32 maps, depending on BGSIZE
+                                                                                           // << 5: Multiply by 32 to get the address of the tilemap row
+                                                                                           // + (xpos >> 3): Index into the tile row to get the tilemap entry address
             const auto mapEntry = vram[tileMapAddr]; // Fetch the tile map entry
             const auto tileNum = mapEntry & 0x3FF;
             palNum = (mapEntry >> 10) & 7;

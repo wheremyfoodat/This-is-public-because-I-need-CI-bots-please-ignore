@@ -6,6 +6,7 @@
 #include "PPU/ppu.hpp"
 #include "dma.hpp"
 #include "cart.hpp"
+#include "joypad.hpp"
 #include "utils.hpp"
 
 using json = nlohmann::json;

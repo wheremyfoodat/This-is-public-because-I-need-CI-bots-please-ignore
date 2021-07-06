@@ -1,7 +1,7 @@
 #pragma once
 #include "memory.hpp"
 
-void irq(u16 vector) {
+void irq (u16 vector) {
     push8(pb); // Push PB, PC and flags
     push16(pc);
     push8(psw.raw);

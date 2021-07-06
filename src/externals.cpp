@@ -16,6 +16,9 @@ DMAChannel Memory::dmaChannels[8];
 // Memory areas
 std::array <u8, 128 * Memory::kilobyte> Memory::wram;
 
+// Joypad.hpp
+u8 Joypads::hvbjoy = 0;
+u16 Joypads::pad1 = 0;
 
 // snes.hpp
 SNES g_snes = SNES();
