@@ -5,7 +5,7 @@
 #include "utils.hpp"
 
 GUI::GUI() : window(sf::VideoMode(800, 600), "SFML window") {
-    window.setFramerateLimit(0); // cap FPS to 60
+    window.setFramerateLimit(60); // cap FPS to 60
     ImGui::SFML::Init(window);    // Init Imgui-SFML
     display.create (256, 224);
 
@@ -108,6 +108,13 @@ void GUI::showMenuBar() {
             ImGui::MenuItem ("Show VRAM editor", nullptr, &showVramEditor);
             ImGui::MenuItem ("Show memory", nullptr, &showMemoryEditor);
             ImGui::EndMenu();
+        }
+
+        if (ImGui::BeginMenu("Configuration")) {
+            if (ImGui::MenuItem ("Vsync", nullptr, &vsync))
+                    window.setFramerateLimit(vsync ? 60 : 0);
+
+            ImGui::End();
         }
 
         ImGui::EndMainMenuBar();

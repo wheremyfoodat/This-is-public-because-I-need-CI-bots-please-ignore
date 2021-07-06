@@ -32,7 +32,9 @@ private:
     bool showMemoryEditor = false;
     bool showVramEditor = false;
     bool showDMAWindow = false;
+
     bool running = false; // Is the emulator running?
+    bool vsync = true; // Is vsync enabled?
 
     int selectedDMAChannel = 0;
 };

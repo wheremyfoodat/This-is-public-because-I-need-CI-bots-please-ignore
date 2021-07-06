@@ -57,7 +57,7 @@ public:
     u8 hvbjoy = 0;
     u16 vramStep = 0; // Depending on vmain.step, this can be 1, 32 or 128
 
-    u8 buffers[256 * 224 * 4][2]; // TODO: Actual coords 
+    u8 buffers[2][256 * 224 * 4]; // TODO: Actual coords 
     int bufferIndex = 0; // We use double buffering so this swaps between 0 and 1
 
     std::array <u16, 0x8000> vram; // The VRAM. Note: This is 16-bit addressed, hence why the array is made of u16's. TODO: Put on heap?
