@@ -13,7 +13,7 @@ void irq (u16 vector) {
 }
 
 void brk() {
-    Helpers::warn ("BRK at PC: {:04X}\n", pc - 1);
+    Helpers::panic ("BRK at PC: {:02X}:{:04X}\n", pb, pc - 1);
     pc += 1; // BRK skips a byte before firing an exception - this byte can be used as a comment by the handler
     irq (Memory::cart.brkVector);
 

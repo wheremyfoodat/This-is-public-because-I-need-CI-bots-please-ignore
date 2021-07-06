@@ -1,5 +1,6 @@
 #pragma once
 #include <SFML/Graphics.hpp>
+#include <thread>
 #include "imgui.h"
 #include "imgui-SFML.h"
 #include "imgui_memory_editor.h"
@@ -11,6 +12,7 @@ class GUI {
 
     MemoryEditor memoryEditor;
     MemoryEditor vramEditor;
+    std::thread emuThread;
 
 public:
     GUI();

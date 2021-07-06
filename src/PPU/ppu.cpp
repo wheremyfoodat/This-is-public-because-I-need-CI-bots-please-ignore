@@ -90,35 +90,28 @@ void PPU::renderBG() {
             }
         }
 
-        u16 palette;
+        u32 palette;
         
         // Use the low and high bytes to get the palette index from the bit-plane
         // The "x ^ 7" is just a faster way of doing "7-x" provided x is in range [0, 7]
         if constexpr (depth == Depth::Bpp2) {
             const auto palIndex = ((line1_low >> (tileX ^ 7) & 1)) | ((line1_high >> (tileX ^ 7) & 1) << 1);
-            palette = paletteRAM[palIndex + 4 * palNum];
+            palette = paletteCache[palIndex + 4 * palNum];
         }
 
         // Same here, except with 4 bits per pixel instead
         else if constexpr (depth == Depth::Bpp4) {
             const auto palIndex = ((line1_low >> (tileX ^ 7) & 1)) | ((line1_high >> (tileX ^ 7) & 1) << 1) | ((line2_low >> (tileX ^ 7) & 1) << 2) | ((line2_high >> (tileX ^ 7) & 1) << 3);
-            palette = paletteRAM[palIndex + 16 * palNum];
+            palette = paletteCache[palIndex + 16 * palNum];
         }
 
         else {
             const auto palIndex = ((line1_low >> (tileX ^ 7) & 1)) | ((line1_high >> (tileX ^ 7) & 1) << 1) | ((line2_low >> (tileX ^ 7) & 1) << 2) | ((line2_high >> (tileX ^ 7) & 1) << 3) |
                                   ((line3_low >> (tileX ^ 7) & 1) << 4) | ((line3_high >> (tileX ^ 7) & 1) << 5) | ((line4_low >> (tileX ^ 7) & 1) << 6) | ((line4_high >> (tileX ^ 7) & 1) << 7);
-            palette = paletteRAM[palIndex];
+            palette = paletteCache[palIndex];
         }
 
-        const auto blue = (palette >> 10) & 0x1F;
-        const auto green = (palette >> 5) & 0x1F;
-        const auto red = palette & 0x1F;
-
-        framebuffer[frameBufferIndex] = Helpers::get8BitColor(red);
-        framebuffer[frameBufferIndex+1] = Helpers::get8BitColor(green);
-        framebuffer[frameBufferIndex+2] = Helpers::get8BitColor(blue);
-
+        *(u32*) &framebuffer[frameBufferIndex] = palette;
         frameBufferIndex += 4;
         xpos++;
     }

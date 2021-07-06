@@ -255,7 +255,13 @@ static void Memory::writeIO (u16 address, u8 value) {
             if (ppu->paletteLatch) {
                 const auto palette = ((value & 0x7F) << 8) | ppu->latchedPalette; // MSB of palette is ignored
                 ppu->paletteRAM[ppu->paletteAddr] = palette;
-                ppu->paletteAddr++; 
+
+                const auto red = Helpers::get8BitColor (palette & 0x1F); // Convert palette to RGBA8888 and cache it for later to be used by the PPU
+                const auto green = Helpers::get8BitColor ((palette >> 5) & 0x1F);
+                const auto blue = Helpers::get8BitColor ((palette >> 10) & 0x1F);
+                ppu->paletteCache[ppu->paletteAddr] = 0xFF000000 | red | (green << 8) | (blue << 16);
+
+                ppu->paletteAddr++; // Increment palette address
             }
 
             else

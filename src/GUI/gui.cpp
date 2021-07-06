@@ -4,10 +4,8 @@
 #include "snes.hpp"
 #include "utils.hpp"
 
-static ImU8 readByteImGui (const ImU8* data, size_t off) { return 69; }
-
 GUI::GUI() : window(sf::VideoMode(800, 600), "SFML window") {
-    window.setFramerateLimit(60); // cap FPS to 60
+    window.setFramerateLimit(0); // cap FPS to 60
     ImGui::SFML::Init(window);    // Init Imgui-SFML
     display.create (256, 224);
 

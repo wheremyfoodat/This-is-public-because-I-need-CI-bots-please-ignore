@@ -60,6 +60,7 @@ public:
     std::array <u8, 256 * 224 * 4> framebuffer; // TODO: Actual coords
     std::array <u16, 0x8000> vram; // The VRAM. Note: This is 16-bit addressed, hence why the array is made of u16's. TODO: Put on heap?
     std::array <u16, 256> paletteRAM; // Palette RAM, addressed in words again
+    std::array <u32, 256> paletteCache; // Palettes are converted from BGR555 to RGBA8888 on write, then cached here to be used later by the PPU for speed reasons
     
     u16 vofs[4] = { 0, 0, 0, 0 };
     u8 old_vofs[4] = { 0, 0, 0, 0 }; // Needed due to how VOFS writes work
