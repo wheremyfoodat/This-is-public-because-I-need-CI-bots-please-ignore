@@ -29,8 +29,8 @@ GUI::GUI() : window(sf::VideoMode(800, 600), "SFML window") {
 }
 
 void GUI::update() {
-    if (running)
-        g_snes.runFrame();
+    if (running) // Run a frame on a separate thread
+        emuThread = std::thread([&] { g_snes.runFrame(); } );
 
     sf::Event event;
 
@@ -60,6 +60,12 @@ void GUI::update() {
     window.clear();
     ImGui::SFML::Render(window);
     window.display();
+    Joypads::update(); // Update pads
+
+    if (emuThread.joinable())
+        emuThread.join();
+
+    g_snes.ppu.bufferIndex ^= 1; // Swap buffers
 }
 
 void GUI::showMenuBar() {
@@ -207,7 +213,7 @@ void GUI::showDisplay() {
         const auto scale_y = size.y / 224.f;
         const auto scale = scale_x < scale_y ? scale_x : scale_y;
 
-        display.update(g_snes.ppu.framebuffer.data());
+        display.update(g_snes.ppu.buffers[g_snes.ppu.bufferIndex ^ 1]); // Present the buffer that's not being currently written to
         sf::Sprite sprite (display);
         sprite.setScale (scale, scale);
         

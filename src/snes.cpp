@@ -20,7 +20,6 @@ void SNES::runFrame() {
     while (!frameDone)
         step();
 
-    Joypads::update(); // Update pads
     frameDone = false;
 }
 

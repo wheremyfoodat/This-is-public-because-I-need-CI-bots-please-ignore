@@ -57,7 +57,9 @@ public:
     u8 hvbjoy = 0;
     u16 vramStep = 0; // Depending on vmain.step, this can be 1, 32 or 128
 
-    std::array <u8, 256 * 224 * 4> framebuffer; // TODO: Actual coords
+    u8 buffers[256 * 224 * 4][2]; // TODO: Actual coords 
+    int bufferIndex = 0; // We use double buffering so this swaps between 0 and 1
+
     std::array <u16, 0x8000> vram; // The VRAM. Note: This is 16-bit addressed, hence why the array is made of u16's. TODO: Put on heap?
     std::array <u16, 256> paletteRAM; // Palette RAM, addressed in words again
     std::array <u32, 256> paletteCache; // Palettes are converted from BGR555 to RGBA8888 on write, then cached here to be used later by the PPU for speed reasons
@@ -75,7 +77,10 @@ public:
     int line = 0; // Line we're currently rendering
 
     PPU() {
-        framebuffer.fill (0xFF);
+        for (auto i = 0; i < 256 * 224 * 4; i++) { // Clear buffers
+            buffers[0][i] = 0xFF;
+            buffers[1][i] = 0xFF;
+        }
     }
 
     void renderScanline();
