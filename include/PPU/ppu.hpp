@@ -39,6 +39,10 @@ union BGSC {
     BitField <0, 2, u8> size; // SC Size (0=One-Screen, 1=V-Mirror, 2=H-Mirror, 3=Four-Screen)
 };
 
+enum class Depth {
+    Bpp2, Bpp4, Bpp8
+};
+
 class PPU {
 public:
     OAMAddr oamaddr;
@@ -67,4 +71,7 @@ public:
     }
 
     void renderScanline();
+
+    template <Depth depth, int number>
+    void renderBG();
 };
