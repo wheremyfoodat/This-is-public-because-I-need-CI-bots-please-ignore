@@ -74,10 +74,22 @@ void CPU::executeOpcode (u8 opcode) {
 
         case 0x4A: lsr_accumulator(); break;
 
+        case 0x1A: ina(); break;
+        case 0x3A: dea(); break;
         case 0x88: dey(); break;
         case 0xCA: dex(); break;
         case 0xC8: iny(); break;
         case 0xE8: inx(); break;
+
+        case 0xC6: dec <AddressingModes::Direct>(); break;
+        case 0xCE: dec <AddressingModes::Absolute>(); break;
+        case 0xD6: dec <AddressingModes::Direct_x>(); break;
+        case 0xDE: dec <AddressingModes::Absolute_x>(); break;
+
+        case 0xE6: inc <AddressingModes::Direct>(); break;
+        case 0xEE: inc <AddressingModes::Absolute>(); break;
+        case 0xF6: inc <AddressingModes::Direct_x>(); break;
+        case 0xFE: inc <AddressingModes::Absolute_x>(); break;     
 
         case 0x08: php(); break;
         case 0x0B: phd(); break;
@@ -100,6 +112,7 @@ void CPU::executeOpcode (u8 opcode) {
         case 0x2C: bit <AddressingModes::Absolute>(); break;
         case 0x34: bit <AddressingModes::Direct_x>(); break;
         case 0x3C: bit <AddressingModes::Absolute_x>(); break;
+        case 0x89: bit_imm(); break;
 
         case 0x10: relativeJump (!psw.sign); break; // bmi
         case 0x30: relativeJump (psw.sign); break; // bmi
@@ -198,6 +211,12 @@ void CPU::executeOpcode (u8 opcode) {
 
         case 0x69: adc_imm(); break;
         case 0xE9: sbc_imm(); break;
+                
+        case 0x04: tsb <AddressingModes::Direct>(); break;
+        case 0x0C: tsb <AddressingModes::Absolute>(); break;
+
+        case 0x14: trb <AddressingModes::Direct>(); break;
+        case 0x1C: trb <AddressingModes::Absolute>(); break;
 
         case 0x18: clc(); break;
         case 0x38: sec(); break;

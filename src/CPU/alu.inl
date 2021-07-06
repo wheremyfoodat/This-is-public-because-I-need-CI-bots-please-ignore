@@ -21,6 +21,61 @@ void bit() {
     }
 }
 
+void bit_imm() { // Note: BIT #imm has completely different behavior from the other addressing modes
+    if (psw.shortAccumulator) {
+        psw.zero = (a.al & nextByte()) == 0;
+        cycles = 2;
+    }
+    
+    else {
+        psw.zero = (a.raw & nextWord()) == 0;
+        cycles = 3;
+    }
+}
+
+template <AddressingModes addrMode>
+void trb() {
+    if (psw.shortAccumulator) {
+        const auto addr = getAddress <addrMode, u8, AccessTypes::RMW>();
+        const auto val = Memory::read8 (addr);
+
+        psw.zero = (a.al & val) == 0;
+        const auto res = (~a.al) & 0xFF & val;
+        Memory::write8 (addr, res);
+    }
+
+    else {
+        const auto addr = getAddress <addrMode, u16, AccessTypes::RMW>();
+        const auto val = Memory::read16 (addr);
+
+        psw.zero = (a.raw & val) == 0;
+        const auto res = (~a.raw) & val;
+        Memory::write16 (addr, res);
+    }
+}
+
+template <AddressingModes addrMode>
+void tsb() {
+    if (psw.shortAccumulator) {
+        const auto addr = getAddress <addrMode, u8, AccessTypes::RMW>();
+        const auto val = Memory::read8 (addr);
+
+        psw.zero = (a.al & val) == 0;
+        const auto res = a.al | val;
+        Memory::write8 (addr, res);
+    }
+
+    else {
+        const auto addr = getAddress <addrMode, u16, AccessTypes::RMW>();
+        const auto val = Memory::read16 (addr);
+
+        psw.zero = (a.raw & val) == 0;
+        const auto res = a.raw | val;
+        Memory::write16 (addr, res);
+    }
+}
+
+
 template <AddressingModes addrMode>
 void ora() {
     if (psw.shortAccumulator) {
@@ -252,6 +307,48 @@ void cmp_imm() { compare_imm (a.raw, psw.shortAccumulator); }
 void cpx_imm() { compare_imm (x, psw.shortIndex); }
 void cpy_imm() { compare_imm (y, psw.shortIndex); }
 
+template <AddressingModes addrMode>
+void inc() {
+    if (psw.shortAccumulator) {
+        const auto addr = getAddress <addrMode, u8, AccessTypes::RMW>();
+        const auto val = Memory::read8 (addr);
+
+        const u8 res = val + 1;
+        setNZ8 (res);
+        Memory::write8 (addr, res);
+    }
+
+    else {
+        const auto addr = getAddress <addrMode, u16, AccessTypes::RMW>();
+        const auto val = Memory::read16 (addr);
+
+        const u16 res = val + 1;
+        setNZ16 (res);
+        Memory::write16 (addr, res);
+    }
+}
+
+template <AddressingModes addrMode>
+void dec() {
+    if (psw.shortAccumulator) {
+        const auto addr = getAddress <addrMode, u8, AccessTypes::RMW>();
+        const auto val = Memory::read8 (addr);
+
+        const u8 res = val - 1;
+        setNZ8 (res);
+        Memory::write8 (addr, res);
+    }
+
+    else {
+        const auto addr = getAddress <addrMode, u16, AccessTypes::RMW>();
+        const auto val = Memory::read16 (addr);
+
+        const u16 res = val - 1;
+        setNZ16 (res);
+        Memory::write16 (addr, res);
+    }
+}
+
 void incIndex (u16& value) {
     value += 1;
 
@@ -280,6 +377,34 @@ void inx() { incIndex(x); }
 void iny() { incIndex(y); }
 void dex() { decIndex(x); }
 void dey() { decIndex(y); }
+
+void ina() {
+    if (psw.shortAccumulator) {
+        a.al = a.al + 1;
+        setNZ8 (a.al);
+    }
+
+    else {
+        a.raw = a.raw + 1;
+        setNZ16 (a.raw);
+    }
+
+    cycles = 2;
+}
+
+void dea() {
+    if (psw.shortAccumulator) {
+        a.al = a.al - 1;
+        setNZ8 (a.al);
+    }
+
+    else {
+        a.raw = a.raw - 1;
+        setNZ16 (a.raw);
+    }
+
+    cycles = 2;
+}
 
 void lsr_accumulator() {
     psw.carry = a.raw & 1;

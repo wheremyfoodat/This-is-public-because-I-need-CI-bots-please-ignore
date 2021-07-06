@@ -5,6 +5,7 @@
 void PPU::renderScanline() {
     const auto bgSize = sc[0].size;
     const auto ypos = line; // TODO: HOFS
+    unsigned xpos = 0; // TODO: VOFS here
 
     auto tileDataStart = nba[0] << 12; // Multiply base address by 4096 K-Words
     auto bgMapStart = (u32) sc[0].base;
@@ -17,20 +18,29 @@ void PPU::renderScanline() {
     auto frameBufferIndex = line * 256 * 4; // The screen is 256 pixels wide, each pixel being 4 bytes
     const auto tileY = ypos & 7; // Which line of the tile are we in?
 
+    // The tile info
+    unsigned palNum;
+
+    unsigned lineLow;
+    unsigned lineHigh;
+
     for (auto x = 0; x < 256; x++) {
-        const auto tileX = x & 7; // Which column of the tile are we in?
-        const auto tileMapAddr = ((ypos >> 3) << 5) + (x >> 3) + bgMapStart;
+        const auto tileX = xpos & 7; // Which column of the tile are we in?
+        
+        if (x == 0 || tileX == 0) { // Fetch the information for a new tile if we need to (IE if we got to the end of a tile, or if we just started rendering)
+            const auto tileMapAddr = ((ypos >> 3) << 5) + (xpos >> 3) + bgMapStart;
 
-        const auto mapEntry = vram[tileMapAddr]; // Fetch the tile map entry
-        const auto tileNum = mapEntry & 0x3FF;
-        const auto palNum = (mapEntry >> 10) & 7;
+            const auto mapEntry = vram[tileMapAddr]; // Fetch the tile map entry
+            const auto tileNum = mapEntry & 0x3FF;
+            palNum = (mapEntry >> 10) & 7;
 
-        const auto tileAddr = tileDataStart + tileNum * 8; // Address of the tile to render
-        const auto lineAddr = tileAddr + tileY; // Address of the line of the tile to render
+            const auto tileAddr = tileDataStart + tileNum * 8; // Address of the tile to render
+            const auto lineAddr = tileAddr + tileY; // Address of the line of the tile to render
 
-        const auto line = vram[lineAddr];
-        const auto lineLow = line & 0xFF;
-        const auto lineHigh = line >> 8;
+            const auto line = vram[lineAddr];
+            lineLow = line & 0xFF;
+            auto lineHigh = line >> 8;
+        }
 
         // Use the low and high bytes to get the palette index from the bit-plane
         // The "x ^ 7" is just a faster way of doing "7-x" provided x is in range [0, 7]
@@ -46,5 +56,6 @@ void PPU::renderScanline() {
         framebuffer[frameBufferIndex+2] = Helpers::get8BitColor(blue);
 
         frameBufferIndex += 4;
+        xpos++;
     }
 }
