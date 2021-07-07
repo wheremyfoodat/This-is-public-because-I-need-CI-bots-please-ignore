@@ -64,12 +64,12 @@ void GUI::update() {
     window.clear();
     ImGui::SFML::Render(window);
     window.display();
-    Joypads::update(); // Update pads
 
-    if (running) // Wait for the SNES thread to finish running the frame
+    if (running) { // Wait for the SNES thread to finish running the frame
+        Joypads::update(); // Update pads
         waitEmuThread();
-
-    g_snes.ppu.bufferIndex ^= 1; // Swap buffers
+        g_snes.ppu.bufferIndex ^= 1; // Swap buffers
+    }
 }
 
 void GUI::showMenuBar() {
@@ -99,8 +99,10 @@ void GUI::showMenuBar() {
                 g_snes.step();
             if (ImGui::MenuItem ("Run", nullptr, &running)) // Same here
                 running = running ? cartInserted : false;
-            if (ImGui::MenuItem ("Pause", nullptr))
-                running = false;
+            if (ImGui::MenuItem ("Pause", nullptr) && running) {
+                waitEmuThread(); // Wait till the frame finishes
+                running = false; // Stop running
+            }
 
             ImGui::EndMenu();
         }
