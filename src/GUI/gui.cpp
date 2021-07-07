@@ -33,11 +33,8 @@ GUI::GUI() : window(sf::VideoMode(800, 600), "SFML window") {
 
 void GUI::update() {
     // Signal the emu thread to wake up
-    if (running) {
-        std::lock_guard <std::mutex> lock (g_snes.emu_mutex);
-        g_snes.run_emu_thread = true;
-        g_snes.emu_condition_variable.notify_one();
-    }
+    if (running)
+        pingEmuThread();
 
     sf::Event event;
 
@@ -69,7 +66,8 @@ void GUI::update() {
     window.display();
     Joypads::update(); // Update pads
 
-    while (g_snes.run_emu_thread && running) {} // Wait till emulator finishes frame
+    if (running) // Wait for the SNES thread to finish running the frame
+        waitEmuThread();
 
     g_snes.ppu.bufferIndex ^= 1; // Swap buffers
 }

@@ -27,6 +27,9 @@ private:
     void showDisplay();
     void showDMAInfo();
 
+    void pingEmuThread();
+    void waitEmuThread();
+
     bool showRegisterWindow = false;
     bool showCartWindow = false;
     bool showMemoryEditor = false;

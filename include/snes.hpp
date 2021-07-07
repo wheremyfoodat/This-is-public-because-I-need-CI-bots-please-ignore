@@ -18,7 +18,7 @@ public:
     void reset();
 
     void runAsync();
-    void waitSignal(); 
+    void waitPing(); 
 
     CPU cpu;
     PPU ppu;

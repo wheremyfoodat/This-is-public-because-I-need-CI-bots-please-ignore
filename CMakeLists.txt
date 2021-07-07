@@ -46,6 +46,7 @@ add_executable(SNES
     src/CPU/cpu.cpp
     src/PPU/ppu.cpp
     src/GUI/gui.cpp
+    src/GUI/threading.cpp
 
     third-party/imgui/imgui_draw.cpp
     third-party/imgui/imgui_demo.cpp
