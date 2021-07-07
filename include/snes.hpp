@@ -27,7 +27,7 @@ public:
     
     std::condition_variable emu_condition_variable;
     std::mutex emu_mutex;
-    volatile bool run_emu_thread = false;
+    std::atomic <bool> run_emu_thread = false;
 }; // End Namespace SNES
 
 extern SNES g_snes; // a global SNES object
