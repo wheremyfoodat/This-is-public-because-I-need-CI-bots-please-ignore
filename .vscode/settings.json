@@ -76,6 +76,11 @@
         "xutility": "cpp",
         "filesystem": "cpp",
         "stack": "cpp",
-        "thread": "cpp"
+        "thread": "cpp",
+        "condition_variable": "cpp",
+        "forward_list": "cpp",
+        "mutex": "cpp",
+        "numeric": "cpp",
+        "valarray": "cpp"
     }
 }

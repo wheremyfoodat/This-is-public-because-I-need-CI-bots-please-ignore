@@ -66,3 +66,18 @@ void SNES::step() {
             break;
     }
 }
+
+// Run our SNES instance on another thread.
+void SNES::runAsync() {
+    while (true) {
+        waitSignal();
+        runFrame();
+        run_emu_thread = false;
+    }
+}
+
+// Makes the emulator thread wait for the GUI thread to send a signal (via run_emu_thread) to run a new frame
+void SNES::waitSignal() {
+    std::unique_lock <std::mutex> lock (emu_mutex);
+    emu_condition_variable.wait(lock, [&]{ return run_emu_thread == true; }); // slep until the GUI tells us to wake up
+}

@@ -26,11 +26,17 @@ GUI::GUI() : window(sf::VideoMode(800, 600), "SFML window") {
     // Configure memory editor
     memoryEditor.ReadFn = &Memory::read8Debugger;
     memoryEditor.WriteFn = &Memory::write8Debugger;
+
+    emuThread = std::thread([&] { g_snes.runAsync(); } ); // Wake up emulator thread
+    emuThread.detach();
 }
 
 void GUI::update() {
-    if (running) // Run a frame on a separate thread
-        emuThread = std::thread([&] { g_snes.runFrame(); } );
+    // Signal the emu thread to wake up
+    if (running) {
+        g_snes.run_emu_thread = true;
+        g_snes.emu_condition_variable.notify_one();
+    }
 
     sf::Event event;
 
@@ -62,8 +68,7 @@ void GUI::update() {
     window.display();
     Joypads::update(); // Update pads
 
-    if (emuThread.joinable())
-        emuThread.join();
+    while (g_snes.run_emu_thread && running) {} // Wait till emulator finishes frame
 
     g_snes.ppu.bufferIndex ^= 1; // Swap buffers
 }
