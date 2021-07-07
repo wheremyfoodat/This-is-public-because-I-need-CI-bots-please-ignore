@@ -5,6 +5,7 @@
 template <Depth depth, int number>
 void PPU::renderBG() {
     constexpr int index = number - 1; // BGs are numbered 1-4 but array indices start at 0
+    auto framebuffer = buffers[bufferIndex];
 
     const auto bgSize = sc[index].size;
     unsigned ypos = line + vofs[index]; // TODO: VOFS

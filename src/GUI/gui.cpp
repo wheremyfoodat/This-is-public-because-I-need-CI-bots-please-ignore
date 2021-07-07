@@ -5,7 +5,7 @@
 #include "utils.hpp"
 
 GUI::GUI() : window(sf::VideoMode(800, 600), "SFML window") {
-    window.setFramerateLimit(0); // cap FPS to 60
+    window.setFramerateLimit(60); // cap FPS to 60
     ImGui::SFML::Init(window);    // Init Imgui-SFML
     display.create (256, 224);
 
@@ -26,11 +26,15 @@ GUI::GUI() : window(sf::VideoMode(800, 600), "SFML window") {
     // Configure memory editor
     memoryEditor.ReadFn = &Memory::read8Debugger;
     memoryEditor.WriteFn = &Memory::write8Debugger;
+
+    emuThread = std::thread([&] { g_snes.runAsync(); } ); // Wake up emulator thread
+    emuThread.detach();
 }
 
 void GUI::update() {
+    // Signal the emu thread to wake up
     if (running)
-        g_snes.runFrame();
+        pingEmuThread();
 
     sf::Event event;
 
@@ -60,6 +64,12 @@ void GUI::update() {
     window.clear();
     ImGui::SFML::Render(window);
     window.display();
+
+    if (running) { // Wait for the SNES thread to finish running the frame
+        Joypads::update(); // Update pads
+        waitEmuThread();
+        g_snes.ppu.bufferIndex ^= 1; // Swap buffers
+    }
 }
 
 void GUI::showMenuBar() {
@@ -89,8 +99,10 @@ void GUI::showMenuBar() {
                 g_snes.step();
             if (ImGui::MenuItem ("Run", nullptr, &running)) // Same here
                 running = running ? cartInserted : false;
-            if (ImGui::MenuItem ("Pause", nullptr))
-                running = false;
+            if (ImGui::MenuItem ("Pause", nullptr) && running) {
+                waitEmuThread(); // Wait till the frame finishes
+                running = false; // Stop running
+            }
 
             ImGui::EndMenu();
         }
@@ -102,6 +114,13 @@ void GUI::showMenuBar() {
             ImGui::MenuItem ("Show VRAM editor", nullptr, &showVramEditor);
             ImGui::MenuItem ("Show memory", nullptr, &showMemoryEditor);
             ImGui::EndMenu();
+        }
+
+        if (ImGui::BeginMenu("Configuration")) {
+            if (ImGui::MenuItem ("Vsync", nullptr, &vsync))
+                    window.setFramerateLimit(vsync ? 60 : 0);
+
+            ImGui::End();
         }
 
         ImGui::EndMainMenuBar();
@@ -207,7 +226,7 @@ void GUI::showDisplay() {
         const auto scale_y = size.y / 224.f;
         const auto scale = scale_x < scale_y ? scale_x : scale_y;
 
-        display.update(g_snes.ppu.framebuffer.data());
+        display.update(g_snes.ppu.buffers[g_snes.ppu.bufferIndex ^ 1]); // Present the buffer that's not being currently written to
         sf::Sprite sprite (display);
         sprite.setScale (scale, scale);
         

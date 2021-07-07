@@ -1,5 +1,8 @@
 #pragma once
 #include <filesystem>
+#include <condition_variable>
+#include <mutex>
+#include <atomic>
 #include "utils.hpp"
 #include "CPU/cpu.hpp"
 #include "PPU/ppu.hpp"
@@ -14,10 +17,17 @@ public:
     void runFrame();
     void reset();
 
+    void runAsync();
+    void waitPing(); 
+
     CPU cpu;
     PPU ppu;
     Scheduler scheduler;
-    bool frameDone = false; // Can we render and go back to the GUI now?
+    bool frameDone = true; // Can we render and go back to the GUI now?
+    
+    std::condition_variable emu_condition_variable;
+    std::mutex emu_mutex;
+    std::atomic <bool> run_emu_thread = false;
 }; // End Namespace SNES
 
 extern SNES g_snes; // a global SNES object
