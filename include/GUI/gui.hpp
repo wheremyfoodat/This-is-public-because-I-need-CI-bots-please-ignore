@@ -26,6 +26,7 @@ private:
     void showCartInfo();
     void showDisplay();
     void showDMAInfo();
+    void showPPURegisters();
 
     void pingEmuThread();
     void waitEmuThread();
@@ -35,6 +36,7 @@ private:
     bool showMemoryEditor = false;
     bool showVramEditor = false;
     bool showDMAWindow = false;
+    bool showPPUWindow = false;
 
     bool running = false; // Is the emulator running?
     bool vsync = true; // Is vsync enabled?

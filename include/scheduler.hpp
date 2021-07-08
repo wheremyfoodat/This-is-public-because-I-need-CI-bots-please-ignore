@@ -8,6 +8,7 @@ enum class EventTypes {
     HBlank,
     EndOfLine,
     PollIRQs,
+    FireNMI,
     Panic
 };
 
@@ -22,6 +23,7 @@ struct Event {
             case EventTypes::HBlank: return "H-Blank";
             case EventTypes::EndOfLine: return "End of line";
             case EventTypes::PollIRQs: return "Poll IRQs";
+            case EventTypes::FireNMI: return "Fire NMI";
             case EventTypes::Panic: return "Panic";
         }
     }

@@ -188,10 +188,21 @@ void and_imm() {
     }
 }
 
-void adc_imm() {
-    if (psw.shortAccumulator) {
-        cycles = 2;
-        const auto operand = nextByte(); // Invert the subtrahend and treat operation as addition
+template <bool is16Bit>
+void adc (u16 operand) {
+    if (psw.decimal) Helpers::panic ("Decimal mode ADC");
+
+    if constexpr (is16Bit) {
+        u32 result = (u32) a.raw + (u32) psw.carry + (u32) operand;
+        psw.carry = result >> 16;
+
+        result &= 0xFFFF;
+        psw.overflow = ((a.raw ^ result) & (operand ^ result)) >> 15; // Fast signed overflow calculation
+        setNZ16 (result);
+        a.raw = result;
+    }
+
+    else {
         u16 result = (u16) a.al + (u16) psw.carry + (u16) operand;
 
         psw.carry = result >> 8; // Branchless carry calculation
@@ -199,53 +210,93 @@ void adc_imm() {
         psw.overflow = ((a.al ^ result) & (operand ^ result)) >> 7; // Fast signed overflow calculation
         setNZ8 (result);
 
-        a.al = result;
-        if (psw.decimal) Helpers::panic ("Decimal mode 8-bit ADC");
+        a.al = result;        
+    }
+}
+
+void adc_imm() {
+    if (psw.shortAccumulator) {
+        cycles = 2;
+        adc <false> (nextByte());
     }
 
     else {
         cycles = 3;
-        const auto operand = nextWord();
-        u32 result = (u32) a.raw + (u32) psw.carry + (u32) operand;
-
-        psw.carry = result >> 16; // Branchless carry calculation
-        result &= 0xFFFF;
-        psw.overflow = ((a.raw ^ result) & (operand ^ result)) >> 15; // Fast signed overflow calculation
-        setNZ16 (result);
-
-        a.raw = result;
-        if (psw.decimal) Helpers::panic ("Decimal mode 16-bit ADC");
+        adc <true> (nextWord());
     }
 }
 
+template <AddressingModes addrMode>
+void adc_mem() {
+    if (psw.shortAccumulator) {
+        const auto addr = getAddress <addrMode, u8, AccessTypes::Read>();
+        const auto val = Memory::read8 (addr);
+        
+        adc <false> (val);
+    }
+
+    else {
+        const auto addr = getAddress <addrMode, u16, AccessTypes::Read>();
+        const auto val = Memory::read16 (addr);
+
+       adc <true> (val);
+    }
+}
+
+template <bool is16Bit>
+void sbc (u16 operand) {
+    if (psw.decimal) Helpers::panic ("Decimal mode ADC");
+
+    if constexpr (is16Bit) {
+        operand = ~operand; // Invert the operand and treat the operation as an addition
+        u32 result = (u32) a.raw + (u32) psw.carry + (u32) operand;
+        psw.carry = result >> 16;
+
+        result &= 0xFFFF;
+        psw.overflow = ((a.raw ^ result) & (operand ^ result)) >> 15; // Fast signed overflow calculation
+        setNZ16 (result);
+        a.raw = result;
+    }
+
+    else {
+        operand = (~operand) & 0xFF;
+        u16 result = (u16) a.al + (u16) psw.carry + (u16) operand;
+
+        psw.carry = result >> 8; // Branchless carry calculation
+        result &= 0xFF;
+        psw.overflow = ((a.al ^ result) & (operand ^ result)) >> 7; // Fast signed overflow calculation
+        setNZ8 (result);
+
+        a.al = result;        
+    }
+}
 
 void sbc_imm() {
     if (psw.shortAccumulator) {
         cycles = 2;
-        const auto operand = ~nextByte(); // Invert the subtrahend and treat operation as addition
-        u16 result = (u16) a.al + (u16) psw.carry + (u16) operand;
-
-        psw.carry = result >> 8; // Branchless carry calculation
-        result &= 0xFF;
-        psw.overflow = ((a.al ^ result) & (operand ^ result)) >> 7; // Fast signed overflow calculation
-        setNZ8 (result);
-
-        a.al = result;
-        if (psw.decimal) Helpers::panic ("Decimal mode 8-bit SBC");
+        sbc <false> (nextByte());
     }
 
     else {
         cycles = 3;
-        const auto operand = ~nextWord();
-        u32 result = (u32) a.raw + (u32) psw.carry + (u32) operand;
+        sbc <true> (nextWord());
+    }
+}
 
-        psw.carry = result >> 16; // Branchless carry calculation
-        result &= 0xFFFF;
-        psw.overflow = ((a.raw ^ result) & (operand ^ result)) >> 15; // Fast signed overflow calculation
-        setNZ16 (result);
+template <AddressingModes addrMode>
+void sbc_mem() {
+    if (psw.shortAccumulator) {
+        const auto addr = getAddress <addrMode, u8, AccessTypes::Read>();
+        const auto val = Memory::read8 (addr);
+        
+        sbc <false> (val);
+    }
 
-        a.raw = result;
-        if (psw.decimal) Helpers::panic ("Decimal mode 16-bit SBC");
+    else {
+        const auto addr = getAddress <addrMode, u16, AccessTypes::Read>();
+        const auto val = Memory::read16 (addr);
+
+       sbc <true> (val);
     }
 }
 
@@ -406,6 +457,68 @@ void dea() {
     cycles = 2;
 }
 
+void asl_accumulator() {
+    if (psw.shortAccumulator) {
+        psw.carry = a.al >> 7;
+        a.al = a.al << 1;
+        setNZ8 (a.al);
+    }
+
+    else {
+        psw.carry = a.raw >> 15;
+        a.raw <<= 1;
+        setNZ16 (a.raw);
+    }
+
+    cycles = 2;
+}
+
+template <AddressingModes addrMode>
+void asl() {
+    if (psw.shortAccumulator) {
+        const auto addr = getAddress<addrMode, u8, AccessTypes::RMW>();
+        auto val = Memory::read8 (addr);
+
+        psw.carry = val >> 7;
+        val <<= 1;
+        setNZ8 (val);
+        Memory::write8 (addr, val);
+    }
+
+    else {
+        const auto addr = getAddress<addrMode, u16, AccessTypes::RMW>();
+        auto val = Memory::read16 (addr);
+
+        psw.carry = val >> 15;
+        val <<= 1;
+        setNZ16 (val);
+        Memory::write16 (addr, val);
+    }
+}
+
+template <AddressingModes addrMode>
+void lsr() {
+    if (psw.shortAccumulator) {
+        const auto addr = getAddress<addrMode, u8, AccessTypes::RMW>();
+        auto val = Memory::read8 (addr);
+
+        psw.carry = val & 1;
+        val >>= 1;
+        setNZ8 (val);
+        Memory::write8 (addr, val);
+    }
+
+    else {
+        const auto addr = getAddress<addrMode, u16, AccessTypes::RMW>();
+        auto val = Memory::read16 (addr);
+
+        psw.carry = val & 1;
+        val >>= 1;
+        setNZ16 (val);
+        Memory::write16 (addr, val);
+    }
+}
+
 void lsr_accumulator() {
     psw.carry = a.raw & 1;
 
@@ -416,6 +529,65 @@ void lsr_accumulator() {
 
     else {
         a.raw >>= 1;
+        setNZ16 (a.raw);
+    }
+
+    cycles = 2;
+}
+
+template <AddressingModes addrMode>
+void rol() {
+    const auto oldCarry = psw.carry;
+    if (psw.shortAccumulator) {
+        const auto addr = getAddress<addrMode, u8, AccessTypes::RMW>();
+        auto val = Memory::read8 (addr);
+
+        psw.carry = val >> 7;
+        val = (val << 1) | oldCarry;
+        setNZ8 (val);
+        Memory::write8 (addr, val);
+    }
+
+    else {
+        const auto addr = getAddress<addrMode, u16, AccessTypes::RMW>();
+        auto val = Memory::read16 (addr);
+
+        psw.carry = val >> 15;
+        val = (val << 1) | oldCarry;
+        setNZ16 (val);
+        Memory::write16 (addr, val);
+    }
+}
+
+void rol_accumulator() {
+    const bool oldCarry = psw.carry;
+
+    if (psw.shortAccumulator) {
+        psw.carry = a.al >> 7;
+        a.al = (a.al << 1) | oldCarry;
+        setNZ8 (a.al);
+    }
+
+    else {
+        psw.carry = a.raw >> 15;
+        a.raw = (a.raw << 1) | oldCarry;
+        setNZ16 (a.raw);
+    }
+
+    cycles = 2;
+}
+
+void ror_accumulator() {
+    const bool oldCarry = psw.carry;
+    psw.carry = a.raw & 1;
+
+    if (psw.shortAccumulator) {
+        a.al = (a.al >> 1) | (oldCarry << 7);
+        setNZ8 (a.al);
+    }
+
+    else {
+        a.raw = (a.raw >> 1) | (oldCarry << 15);
         setNZ16 (a.raw);
     }
 

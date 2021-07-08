@@ -126,6 +126,14 @@ u32 getAddress() {
         return ((u32) nextByte() + (u32) dpOffset + (u32) x) & 0xFFFFFF;
     }
 
+    else if constexpr (addrMode == AddressingModes::Direct_y) {
+        cycles += is16Bit ? 5 : 4;
+        if (dpOffset & 0xFF) // add an extra cycle if the low byte of the direct page offset is non-zero
+            cycles++;
+
+        return ((u32) nextByte() + (u32) dpOffset + (u32) y) & 0xFFFFFF;
+    }
+
     else if constexpr (addrMode == AddressingModes::Direct_indirect) {
         cycles += is16Bit ? 6 : 5;
         if (dpOffset & 0xFF) // add an extra cycle if the low byte of the direct page offset is non-zero

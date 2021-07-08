@@ -30,12 +30,12 @@ static void Memory::loadROM (std::filesystem::path directory) {
 static void Memory::mapFastmemPages() {
     pageTableRead.fill (nullptr); // Erase page tables
     pageTableWrite.fill (nullptr);
+    
+    u32 size = cart.romSize * 1024;  // size of the ROM in bytes
 
     if (cart.mapper == Mappers::LoROM) { // Map LoROM
-        u32 romOffset = 0;
-        u32 size = cart.romSize * 1024;  // size of the ROM in bytes
-
         if (cart.rom.size() >= 2 * megabyte) Helpers::panic ("LoROM ROM over 2MB");
+        u32 romOffset = 0;
 
         // Map system area RAM and ROM to fastmem
         for (auto page = 0; page < 0x800;) {
@@ -63,8 +63,57 @@ static void Memory::mapFastmemPages() {
         }   
     }
 
+    else if (cart.mapper == Mappers::HiROM) { // Map HiROM
+        if (cart.rom.size() >= 4 * megabyte) Helpers::panic ("HiROM ROM over 4MB");
+        u32 romOffset = 32 * kilobyte; // Top 32KB of the first bank
+
+        // Map system area RAM and ROM to fastmem
+        for (auto page = 0; page < 0x800;) { // Map LoROM banks
+            for (auto i = 0; i < 4; i++) { // Map 4 2KB pages to system area RAM
+                pageTableRead[page] = &wram[i * pageSize]; // Mark system area RAM as R/W
+                pageTableWrite[page] = &wram[i * pageSize];
+                    
+                pageTableRead[page + 0x1000] = &wram[i * pageSize]; // Map the upper system area mirror as well
+                pageTableWrite[page + 0x1000] = &wram[i * pageSize];
+
+                page += 1; 
+            }
+ 
+            page += 12; // Skip 24KB ahead, to get to system area ROM
+            
+            for (auto i = 0; i < 16; i++) { // Map 16 ROM pages. In the LoROM area for HiROM carts, only the upper 32KB of each bank is mapped
+                if (romOffset < size) { // Don't map pages if we've gone over the ROM size
+                    pageTableRead[page] = &cart.rom[romOffset];
+                    pageTableRead[page + 0x1000] = &cart.rom[romOffset]; // Mark the upper ROM mirror as well
+                    romOffset += pageSize;
+                }
+
+                page += 1;
+            }
+            
+            romOffset += 32 * kilobyte; // Skip next half-bank
+        }
+
+        romOffset = 0;
+        for (auto page = 0x800; page < 0x1000; page++) { // map the HiROM ROM pages
+            if (romOffset > size) break; // Stop mapping pages when we've gone over the size
+            
+            const auto pointer = &cart.rom[romOffset];
+            if (page < 0xFC0) // WS1 HiROM is actually smaller than WS2 HiROM, as the last 2 banks are WRAM, so we map less memory to WS1 HiROM than WS2
+                pageTableRead[page] = pointer;
+            pageTableRead[page + 0x1000] = pointer; // Map WS2 HiROM
+            
+            romOffset += pageSize;
+        }
+    }
+
     else
         Helpers::panic ("Don't know how to map fastmem pages!!! Unknown mapper: {}\n", cart.mapperName());
+
+    for (auto i = 0xFC0; i < 0x1000; i++) { // Map the 128KB of WRAM to page tables
+        pageTableRead[i] = &wram[(i - 0xFC0) * pageSize];
+        pageTableWrite[i] = &wram[(i - 0xFC0) * pageSize];
+    }
 }
 
 static u8 Memory::read8 (u32 address) {
@@ -114,19 +163,38 @@ static u8 Memory::readSlow (u32 address) {
 
     if (bank <= 0x3F || (bank >= 0x80 && bank <= 0xBF)) { // See if the address is in system area
         switch (addr) {
+            case 0x2000 ... 0x2100: case 0x2200 ... 0x4000: Helpers::warn ("Read from unmapped memory (Addr: {:02X}:{:04X})\n", bank, address); return 0;
+            case 0x6000 ... 0x7FFF: Helpers::warn ("Read from unimplemented expansion address: {:02X}:{:04X}\n", bank, address); return 0;
+
+            case 0x2140: case 0x2141: case 0x2142: case 0x2143: return rand(); // APU ports
+
             case 0x4210: { // rdnmi
                 const auto val = ppu->rdnmi;
                 ppu->rdnmi &= 0x7F; // Reading from rdnmi acknowledges the NMI and turns bit 7 off
                 return val;
             }
 
+            case 0x4211: { // timeup
+                const auto val = ppu->timeup;
+                ppu->timeup &= 0x7F; // Reading from timeup acknowledges the IRQ and turns bit 7 off
+                return val;
+            }
+
             case 0x4212: // hvbjoy
                 ppu->hvbjoy ^= 1; // We're stubbing the low bit
                 return ppu->hvbjoy;
+
+            // Math engine registers
+            case 0x4216: return mathEngine.division_remainder_multiplication_product & 0xFF; break;
+            case 0x4217: return mathEngine.division_remainder_multiplication_product >> 8; break;
                 
-            // Automatic reading Joypad ports
+            // Automatic reading joypad ports
             case 0x4218: return Joypads::pad1 & 0xFF; // Joypad 1 (Low) 
             case 0x4219: return Joypads::pad1 >> 8; // Joypad 1 (high)
+            case 0x421A: case 0x421B: return 0; // Joypad 2 (Unimplemented)
+
+            // Manual reading joypad ports
+            case 0x4016: case 0x4017: return 0; // Joypad Input Register A and B (unimplemented)
 
             default: Helpers::panic ("Read from unimplemented slow address {:06X}", address);
         }
@@ -279,6 +347,31 @@ static void Memory::writeIO (u16 address, u8 value) {
         case 0x2182: wramAddress = (wramAddress & ~0xFF00) | (value << 8); break; // WMADDM;
         case 0x2183: wramAddress = (wramAddress & 0xFFFF) | ((value & 1) << 16); break; // WMADDH
 
+        case 0x4200: { // NMITIMEN
+            const bool nmiRisingEdge = !(ppu->nmitimen & 0x80) && (value & 0x80); // Check if the NMI enable flag went from 0 to 1
+            ppu->nmitimen = value; 
+            if (value & 0x30) 
+                Helpers::warn ("Enabled H/V IRQs\n");
+
+            if (nmiRisingEdge && (ppu->rdnmi & 0x80)) // Check if NMIs just got enabled and were already requested, and fire an NMI if so
+                scheduler->pushEvent (EventTypes::FireNMI, 0); // Timestamp = 0 means it will instantly get executed
+        } break; 
+
+        case 0x4202: mathEngine.multiplicand = value; break; // WRMPYA
+        case 0x4203: // WRMPYB
+            mathEngine.multiplier = value;
+            mathEngine.division_remainder_multiplication_product = (u16) mathEngine.multiplicand * (u16) mathEngine.multiplier;
+            break; 
+
+        case 0x4204: mathEngine.dividend = (mathEngine.dividend & 0xFF00) | value; break; // WRDIVL
+        case 0x4205: mathEngine.dividend = (mathEngine.dividend & 0x00FF) | (value << 8); break; // WRDIVH
+        case 0x4206: // WRDIVB
+            mathEngine.divisor = value;
+            mathEngine.quotient = (value) ? 0xFFFF : (u16) mathEngine.dividend / (u16) mathEngine.divisor; // Quotient is 0xFFFF is divisor is 0, else it's dividend/divisor
+            // Similarly for remainder, it's equal to the dividend if divisor == 0, else it's equal to the dividend % divisor
+            mathEngine.division_remainder_multiplication_product = (value) ? mathEngine.dividend : (u16) mathEngine.dividend % (u16) mathEngine.divisor;
+            break;
+
         case 0x420B: // MDMAEN
             for (auto i = 0; i < 8; i++) {
                 if (value & (1 << i)) // Each of the 8 bits signifies whether a DMA channel should fire a GPDMA
@@ -298,7 +391,7 @@ static void Memory::writeIO (u16 address, u8 value) {
             dmaChannels[channel].controlRegs[reg] = value;
         } break;
 
-        default: Helpers::warn ("Unimplemented write to system area address {:06X} (val: {:02X})\n", address, value); break;
+        default: return; Helpers::warn ("Unimplemented write to system area address {:06X} (val: {:02X})\n", address, value); break;
     }
 }
 

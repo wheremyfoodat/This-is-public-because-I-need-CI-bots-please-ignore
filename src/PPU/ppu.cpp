@@ -119,5 +119,10 @@ void PPU::renderBG() {
 }
 
 void PPU::renderScanline() {
-    renderBG <Depth::Bpp8, 1>();
+    switch (bgmode.mode) { // TODO: Implement all BG modes properly
+        case 0: renderBG <Depth::Bpp2, 1>(); break;
+        case 1: renderBG <Depth::Bpp2, 3>(); break;
+        case 6: renderBG <Depth::Bpp4, 1>(); break;
+        default: Helpers::panic ("Unimplemented BG mode {}\n", bgmode.mode);
+    }
 }

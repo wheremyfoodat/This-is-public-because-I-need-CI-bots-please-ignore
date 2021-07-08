@@ -10,6 +10,7 @@ SNES::SNES() {
 
     db >> Memory::gameDB;
     Memory::ppu = &ppu;
+    Memory::scheduler = &scheduler;
 }
 
 void SNES::reset() {
@@ -47,6 +48,9 @@ void SNES::step() {
                         frameDone = true; // We can go back to the frontend real quick
                         ppu.rdnmi |= 0x80; // Request VBlank NMI
                         ppu.hvbjoy |= 0x80; // Turn on V-Blank flag in hvbjoy
+
+                        if (ppu.nmitimen & 0x80) // Fire NMI if they're enabled
+                            cpu.fireNMI();
                     }
  
                     else if (ppu.line == 262) { // Check if we're leaving vblank
@@ -57,7 +61,9 @@ void SNES::step() {
 
                     scheduler.pushEvent (EventTypes::HBlank, e.timestamp + 1106); // Schedule next HBlank
                     break;
-
+                    
+                case EventTypes::FireNMI: cpu.fireNMI(); break;
+                
                 default: Helpers::panic ("Unhandled event: {}\n", e.name());
             }
         }

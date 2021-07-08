@@ -7,6 +7,8 @@
 #include "dma.hpp"
 #include "cart.hpp"
 #include "joypad.hpp"
+#include "scheduler.hpp"
+#include "math_engine.hpp"
 #include "utils.hpp"
 
 using json = nlohmann::json;
@@ -20,6 +22,8 @@ namespace Memory {
     extern json gameDB; // Our game database containing info about each game's cart
     extern Cartridge cart;
     extern PPU* ppu;
+    extern Scheduler* scheduler;
+    extern MathEngine mathEngine;
     extern DMAChannel dmaChannels[8];
 
     // System memory

@@ -44,6 +44,10 @@ public:
     void step();
     void reset();
 
+    void fireNMI() {
+        irq (Memory::cart.nmiVector);
+    }
+
 private:
     u32 pbOffset = 0; // pb << 16 and db << 16 respectively
     u32 dbOffset = 0; // Used so we don't have to shift on every memory access
@@ -127,7 +131,7 @@ private:
     }
 
     void executeOpcode (u8 opcode);
-    
+
     // Instruction definitions are in inline header file because so templates don't anger the linker
     #include "../../src/CPU/addressing_modes.inl"
     #include "../../src/CPU/loads_stores.inl"

@@ -18,6 +18,15 @@ void xce() {
     cycles = 2;
 }
 
+// Exchange accumulator low and high
+void xba() {
+    const auto temp = a.al;
+    a.al = a.ah;
+    a.ah = temp;
+
+    cycles = 3;
+}
+
 void sec() { psw.carry = true; cycles = 2; }
 void clc() { psw.carry = false; cycles = 2; }
 void sei() { psw.irqDisable = true; cycles = 2; }
@@ -46,7 +55,6 @@ void plb() {
 
 void plp() {
     setPSW (pop8<false>());
-    Helpers::warn ("PLP at {:04X} Loaded: {:02X}", pc, psw.raw);
     cycles = 4;
 }
 
@@ -200,6 +208,20 @@ void tay() {
     cycles = 2;
 }
 
+void tax() {
+    if (psw.shortIndex) {
+        x = a.al;
+        setNZ8 (x);
+    }
+
+    else {
+        x = a.raw;
+        setNZ16 (x);
+    }
+
+    cycles = 2;
+}
+
 void txa() {
     if (psw.shortAccumulator) {
         a.al = x & 0xFF;
@@ -212,4 +234,54 @@ void txa() {
     }
 
     cycles = 2;
+}
+
+void txy() {
+    y = x;
+
+    if (psw.shortIndex)
+        setNZ8(x);
+    else
+        setNZ16(x);
+    cycles = 2;
+}
+
+void tyx() {
+    x = y;
+
+    if (psw.shortIndex)
+        setNZ8(y);
+    else
+        setNZ16(y);
+    cycles = 2;
+}
+
+void tdc() {
+    a.raw = dpOffset;
+    setNZ16 (a.raw);
+}
+
+void tsc() {
+    a.raw = sp;
+    setNZ16 (a.raw);
+}
+
+void mvn() {
+    const auto dest = y | (nextByte() << 16); // Destination address
+    const auto source = x | (nextByte() << 16); // Source address
+
+    Memory::write8 (dest, Memory::read8(source)); // Move a byte from source to dest
+    
+    x++; // Increment source and dest pointers, decrement byte counter
+    y++;
+    a.raw--;
+
+    if (psw.shortIndex) {
+        x &= 0xFF;
+        y &= 0xFF;
+    }
+
+    if (a.raw != 0xFFFF) // Continue copy loop until a == 0xFFFF
+        pc -= 3;
+    cycles = 7; // 7 cycles per byte transferred
 }

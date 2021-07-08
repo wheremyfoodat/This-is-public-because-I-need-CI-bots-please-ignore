@@ -1,4 +1,5 @@
 #include "snes.hpp"
+#include "scheduler.hpp"
 #include "PPU/ppu.hpp"
 #include "memory.hpp"
 #include "dma.hpp"
@@ -11,6 +12,8 @@
 json Memory::gameDB;
 Cartridge Memory::cart;
 PPU* Memory::ppu = nullptr;
+Scheduler* Memory::scheduler = nullptr;
+MathEngine Memory::mathEngine;
 DMAChannel Memory::dmaChannels[8];
 
 // Memory areas

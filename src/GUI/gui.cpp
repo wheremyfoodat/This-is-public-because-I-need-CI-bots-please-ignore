@@ -49,12 +49,15 @@ void GUI::update() {
     showMenuBar();
     showDisplay();
 
+    // Display our debugging windows
     if (showCartWindow) 
         showCartInfo();
     if (showRegisterWindow) 
         showRegisters();
     if (showDMAWindow)
         showDMAInfo();
+    if (showPPUWindow)
+        showPPURegisters();
     
     if (showMemoryEditor)
         memoryEditor.DrawWindow ("Memory Editor", nullptr, 0x1000000);
@@ -111,6 +114,7 @@ void GUI::showMenuBar() {
             ImGui::MenuItem ("Show registers", nullptr, &showRegisterWindow);
             ImGui::MenuItem ("Show cart info", nullptr, &showCartWindow);
             ImGui::MenuItem ("Show DMA info", nullptr, &showDMAWindow);
+            ImGui::MenuItem ("Show PPU registers", nullptr, &showPPUWindow);
             ImGui::MenuItem ("Show VRAM editor", nullptr, &showVramEditor);
             ImGui::MenuItem ("Show memory", nullptr, &showMemoryEditor);
             ImGui::EndMenu();
@@ -215,6 +219,24 @@ void GUI::showDMAInfo() {
         ImGui::Text ("A-bus step:     %s", steps[params.step]);
         ImGui::Text ("Transfer unit:  %d", (u8) params.unitSelect);
         ImGui::SliderInt("Channel", &selectedDMAChannel, 0, 7);
+        ImGui::End();
+    }
+}
+
+void GUI::showPPURegisters() {
+    if (ImGui::Begin("PPU registers")) {
+        static const char* hvConfigs[] = { "Disabled", "At H=H", "At V=V + H=0", "At H=H + V=V" };
+        const auto hvSetting = (g_snes.ppu.nmitimen >> 4) & 3;
+        bool joypadPolling = (g_snes.ppu.nmitimen & 1) != 0;
+        bool nmiEnabled = (g_snes.ppu.nmitimen & 0x80) != 0;
+
+        ImGui::Text ("NMITIMEN: %02X", g_snes.ppu.nmitimen);
+        ImGui::Text ("H/V IRQ setting: %s", hvConfigs[hvSetting]);
+        ImGui::Text ("BG mode: %d", (int) g_snes.ppu.bgmode.mode);
+        
+        ImGui::Checkbox ("NMIs enabled", &nmiEnabled);
+        ImGui::SameLine();
+        ImGui::Checkbox ("Automatic pad polling", &joypadPolling);
         ImGui::End();
     }
 }
