@@ -8,7 +8,8 @@
 #include "memory.hpp"
 
 // Use a game database to find a ROMs type and attributes through its SHA1 hash
-void Cartridge::getROMInfo (json& dbEntry) {    
+// Also initialize our save file
+void Cartridge::getROMInfo (json& dbEntry, std::filesystem::path& directory) {    
     auto expansion = dbEntry["ROMType"].dump();
 
     // Get coprocessor type
@@ -57,6 +58,9 @@ void Cartridge::getROMInfo (json& dbEntry) {
     ramSize = std::stoi (dbEntry["RAMSize"].dump()) / 8; // Convert RAM size to kilobytes from kilobits
     hasRTC = expansion.find ("RTC") != std::string::npos;
     hasBattery = expansion.find ("Battery") != std::string::npos;
+
+    saveFile = SaveFile(directory.stem().replace_extension(".sav"), ramSize * 1024); // Create our memory-mapped save file
+    sram = saveFile.data();
 }
 
 // Set cart info to default if it wasn't found in the game db

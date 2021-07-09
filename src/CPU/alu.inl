@@ -577,6 +577,30 @@ void rol_accumulator() {
     cycles = 2;
 }
 
+template <AddressingModes addrMode>
+void ror() {
+    const auto oldCarry = psw.carry;
+    if (psw.shortAccumulator) {
+        const auto addr = getAddress<addrMode, u8, AccessTypes::RMW>();
+        auto val = Memory::read8 (addr);
+
+        psw.carry = val & 1;
+        val = (val >> 1) | (oldCarry << 7);
+        setNZ8 (val);
+        Memory::write8 (addr, val);
+    }
+
+    else {
+        const auto addr = getAddress<addrMode, u16, AccessTypes::RMW>();
+        auto val = Memory::read16 (addr);
+
+        psw.carry = val & 1;
+        val = (val >> 1) | (oldCarry << 15);
+        setNZ16 (val);
+        Memory::write16 (addr, val);
+    }
+}
+
 void ror_accumulator() {
     const bool oldCarry = psw.carry;
     psw.carry = a.raw & 1;

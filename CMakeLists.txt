@@ -31,6 +31,7 @@ include_directories(third-party/tinyfiledialogs)
 include_directories(third-party/imgui-club/imgui_memory_editor)
 include_directories(third-party/json)
 include_directories(third-party/sha1)
+include_directories(third-party/mio/single_include)
 
 add_subdirectory(third-party/fmt)
 add_subdirectory(third-party/imgui-sfml)

@@ -63,7 +63,7 @@ void SNES::step() {
                     break;
                     
                 case EventTypes::FireNMI: cpu.fireNMI(); break;
-                
+
                 default: Helpers::panic ("Unhandled event: {}\n", e.name());
             }
         }

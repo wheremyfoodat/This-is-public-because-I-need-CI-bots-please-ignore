@@ -43,6 +43,10 @@ enum class Depth {
     Bpp2, Bpp4, Bpp8
 };
 
+enum class RenderPriority {
+    Low, High, Both
+};
+
 class PPU {
 public:
     OAMAddr oamaddr;
@@ -58,6 +62,7 @@ public:
     u8 nmitimen = 0;
     u8 hvbjoy = 0;
     u16 vramStep = 0; // Depending on vmain.step, this can be 1, 32 or 128
+    u8 tm = 0;
 
     u8 buffers[2][256 * 224 * 4]; // TODO: Actual coords 
     int bufferIndex = 0; // We use double buffering so this swaps between 0 and 1
@@ -65,7 +70,8 @@ public:
     std::array <u16, 0x8000> vram; // The VRAM. Note: This is 16-bit addressed, hence why the array is made of u16's. TODO: Put on heap?
     std::array <u16, 256> paletteRAM; // Palette RAM, addressed in words again
     std::array <u32, 256> paletteCache; // Palettes are converted from BGR555 to RGBA8888 on write, then cached here to be used later by the PPU for speed reasons
-    
+    std::array <u16, 256> scanlineBuffer;
+
     u16 vofs[4] = { 0, 0, 0, 0 };
     u8 old_vofs[4] = { 0, 0, 0, 0 }; // Needed due to how VOFS writes work
 
@@ -87,6 +93,6 @@ public:
 
     void renderScanline();
 
-    template <Depth depth, int number>
+    template <Depth depth, int number, RenderPriority priority>
     void renderBG();
 };

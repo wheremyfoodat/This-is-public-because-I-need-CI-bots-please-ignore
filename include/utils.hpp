@@ -178,4 +178,12 @@ namespace Helpers {
     constexpr u8 get8BitColor (u8 color5) {
         return(color5 << 3) | (color5 >> 2);
     }
+
+    inline int popcnt32 (int number) {
+        #if defined __has_builtin && __has_builtin (__builtin_popcount)
+            return __builtin_popcount (number);
+        #else
+            #error "No builtin popcount on your compiler! TODO: Add portable popcount"
+        #endif
+    }
 }

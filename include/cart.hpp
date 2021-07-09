@@ -1,7 +1,9 @@
 #pragma once
+#include <filesystem>
 #include <vector>
-#include "utils.hpp"
 #include "nlohmann/json.hpp"
+#include "save_file.hpp"
+#include "utils.hpp"
 
 using json = nlohmann::json;
 
@@ -46,6 +48,9 @@ struct Cartridge {
     bool hasBattery = false;
     bool hasRTC = false;
 
+    SaveFile saveFile;
+    uint8_t* sram;
+
     const char* mapperName() {
         switch (mapper) {
             case Mappers::NoCart: return "No cartridge inserted";
@@ -75,6 +80,6 @@ struct Cartridge {
         }
     }
 
-    void getROMInfo (json& dbEntry); // Set cartridge info based on game database
+    void getROMInfo (json& dbEntry, std::filesystem::path& directory); // Set cartridge info based on game database, initialize SRAM and save files
     void setDefault(); // Set cartridge info to default values if we can't find it in the db
 };

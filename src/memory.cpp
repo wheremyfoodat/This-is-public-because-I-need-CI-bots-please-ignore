@@ -21,7 +21,7 @@ static void Memory::loadROM (std::filesystem::path directory) {
 
     else {
         auto& dbEntry = Memory::gameDB[hash];
-        cart.getROMInfo(dbEntry);
+        cart.getROMInfo(dbEntry, directory);
     }
 
     mapFastmemPages(); // Fix our page tables so they fit with our new ROM
@@ -60,7 +60,28 @@ static void Memory::mapFastmemPages() {
 
                 page += 1;
             }
-        }   
+        }
+
+        // map LoROM SRAM to fastmem
+        const auto sramSize = cart.ramSize * 1024;
+        if (Helpers::popcnt32(sramSize) != 1) // assert ram size is a power of 2
+            Helpers::panic ("RAM size is not a power of 2!\n");
+
+        auto sramMask = sramSize - 1;
+        auto sramOffset = 0;
+
+        for (auto page = 0xE00; page < 0xFB0;) { // Map SRAM pages as R/W
+            pageTableRead[page] = &cart.sram[sramOffset];
+            pageTableWrite[page] = &cart.sram[sramOffset];
+
+            pageTableRead[page + 0x1000] = &cart.sram[sramOffset]; // Map upper SRAM as well
+            pageTableWrite[page + 0x1000] = &cart.sram[sramOffset];
+
+            sramOffset += pageSize;
+            sramOffset &= sramMask; // Mirror SRAM if we go over the SRAM size
+
+            page += ((page & 0xF) == 0xF) ? 33 : 1; // Skip to next SRAM bank if we're at the end of a 32KB SRAM bank
+        }
     }
 
     else if (cart.mapper == Mappers::HiROM) { // Map HiROM
@@ -115,6 +136,7 @@ static void Memory::mapFastmemPages() {
         pageTableWrite[i] = &wram[(i - 0xFC0) * pageSize];
     }
 }
+static u8 sram[8192];
 
 static u8 Memory::read8 (u32 address) {
     const auto page = address >> 11; // Divide address by 2048 to get the page
@@ -165,7 +187,10 @@ static u8 Memory::readSlow (u32 address) {
         switch (addr) {
             case 0x2000 ... 0x2100: case 0x2200 ... 0x4000: Helpers::warn ("Read from unmapped memory (Addr: {:02X}:{:04X})\n", bank, address); return 0;
             case 0x6000 ... 0x7FFF: Helpers::warn ("Read from unimplemented expansion address: {:02X}:{:04X}\n", bank, address); return 0;
+            case 0x436C: case 0x436D: Helpers::warn ("Read from whatever the fuck that was\n"); return 0;
+            case 0x4B11: Helpers::warn ("Read from more weird invalid memory"); return 0;
 
+            case 0x213F: Helpers::warn ("Read from PPU2 Status\n"); return 0;
             case 0x2140: case 0x2141: case 0x2142: case 0x2143: return rand(); // APU ports
 
             case 0x4210: { // rdnmi
@@ -185,8 +210,10 @@ static u8 Memory::readSlow (u32 address) {
                 return ppu->hvbjoy;
 
             // Math engine registers
-            case 0x4216: return mathEngine.division_remainder_multiplication_product & 0xFF; break;
-            case 0x4217: return mathEngine.division_remainder_multiplication_product >> 8; break;
+            case 0x4214: return mathEngine.quotient & 0xFF; 
+            case 0x4215: return mathEngine.quotient >> 8;
+            case 0x4216: return mathEngine.division_remainder_multiplication_product & 0xFF;
+            case 0x4217: return mathEngine.division_remainder_multiplication_product >> 8;
                 
             // Automatic reading joypad ports
             case 0x4218: return Joypads::pad1 & 0xFF; // Joypad 1 (Low) 
@@ -206,7 +233,7 @@ static u8 Memory::readSlow (u32 address) {
 
 //  write function for stuff like IO, where fastmem will not work
 // IfSlow "isDebugger" is true, this function does not provoke write side-effects when writing to IO
-template <bool isDebugger>
+template <bool isDebugger> 
 static void Memory::writeSlow (u32 address, u8 value) {
     const auto bank = address >> 16;
     const auto addr = (u16) address;
@@ -338,6 +365,8 @@ static void Memory::writeIO (u16 address, u8 value) {
             ppu->paletteLatch = !ppu->paletteLatch;
         } break;
 
+        case 0x212C: ppu->tm = value; break;
+
         case 0x2180: // WMDATA
             wram[wramAddress++] = value;
             wramAddress &= 0x1FFFF;
@@ -378,7 +407,8 @@ static void Memory::writeIO (u16 address, u8 value) {
                     doGPDMA (i);
             }
             break;
-
+        
+        case 0x420C: if (value) Helpers::warn ("Fired HDMA (HDMAEN: {:02X})", value); break;
 
         case 0x420D: Helpers::warn ("Unimplemented write to MEMSEL (val: {:02X})\n", value); break;
 

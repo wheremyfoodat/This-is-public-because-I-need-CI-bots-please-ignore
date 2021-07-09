@@ -107,7 +107,12 @@ void CPU::executeOpcode (u8 opcode) {
 
         case 0x54: mvn(); break;
 
+        case 0x66: ror <AddressingModes::Direct>(); break;
         case 0x6A: ror_accumulator(); break;
+        case 0x6E: ror <AddressingModes::Absolute>(); break;
+        case 0x76: ror <AddressingModes::Direct_x>(); break;
+        case 0x7E: ror <AddressingModes::Absolute_x>(); break;
+
 
         case 0x1A: ina(); break;
         case 0x3A: dea(); break;

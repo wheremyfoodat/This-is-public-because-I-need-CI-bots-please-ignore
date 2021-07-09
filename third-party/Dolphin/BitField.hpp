@@ -117,6 +117,7 @@
  * TODO(neobrain): Confirm that this is a proper fix and not just masking
  * symptoms.
  */
+#undef max
 #pragma pack(1)
 template <std::size_t position, std::size_t bits, typename T,
           // StorageType is T for non-enum types and the underlying type of T if
