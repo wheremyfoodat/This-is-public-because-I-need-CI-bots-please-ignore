@@ -64,23 +64,25 @@ static void Memory::mapFastmemPages() {
 
         // map LoROM SRAM to fastmem
         const auto sramSize = cart.ramSize * 1024;
-        if (Helpers::popcnt32(sramSize) != 1) // assert ram size is a power of 2
-            Helpers::panic ("RAM size is not a power of 2!\n");
+        if (sramSize != 0 && cart.hasBattery) {
+            if (Helpers::popcnt32(sramSize) != 1) // assert ram size is a power of 2
+                Helpers::panic ("RAM size is not a power of 2!\n");
 
-        auto sramMask = sramSize - 1;
-        auto sramOffset = 0;
+            auto sramMask = sramSize - 1;
+            auto sramOffset = 0;
 
-        for (auto page = 0xE00; page < 0xFB0;) { // Map SRAM pages as R/W
-            pageTableRead[page] = &cart.sram[sramOffset];
-            pageTableWrite[page] = &cart.sram[sramOffset];
+            for (auto page = 0xE00; page < 0xFB0;) { // Map SRAM pages as R/W
+                pageTableRead[page] = &cart.sram[sramOffset];
+                pageTableWrite[page] = &cart.sram[sramOffset];
 
-            pageTableRead[page + 0x1000] = &cart.sram[sramOffset]; // Map upper SRAM as well
-            pageTableWrite[page + 0x1000] = &cart.sram[sramOffset];
+                pageTableRead[page + 0x1000] = &cart.sram[sramOffset]; // Map upper SRAM as well
+                pageTableWrite[page + 0x1000] = &cart.sram[sramOffset];
 
-            sramOffset += pageSize;
-            sramOffset &= sramMask; // Mirror SRAM if we go over the SRAM size
+                sramOffset += pageSize;
+                sramOffset &= sramMask; // Mirror SRAM if we go over the SRAM size
 
-            page += ((page & 0xF) == 0xF) ? 33 : 1; // Skip to next SRAM bank if we're at the end of a 32KB SRAM bank
+                page += ((page & 0xF) == 0xF) ? 33 : 1; // Skip to next SRAM bank if we're at the end of a 32KB SRAM bank
+            }
         }
     }
 

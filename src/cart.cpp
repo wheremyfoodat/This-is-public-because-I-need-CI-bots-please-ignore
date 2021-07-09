@@ -59,8 +59,10 @@ void Cartridge::getROMInfo (json& dbEntry, std::filesystem::path& directory) {
     hasRTC = expansion.find ("RTC") != std::string::npos;
     hasBattery = expansion.find ("Battery") != std::string::npos;
 
-    saveFile = SaveFile(directory.stem().replace_extension(".sav"), ramSize * 1024); // Create our memory-mapped save file
-    sram = saveFile.data();
+    if (hasBattery) { // Create our memory-mapped save file
+        saveFile = SaveFile(directory.stem().replace_extension(".sav"), ramSize * 1024);
+        sram = saveFile.data();
+    }
 }
 
 // Set cart info to default if it wasn't found in the game db
