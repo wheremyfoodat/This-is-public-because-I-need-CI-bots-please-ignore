@@ -29,6 +29,7 @@ void CPU::executeOpcode (u8 opcode) {
         case 0x98: tya(); break;
         case 0x9A: txs(); break;
         case 0x9B: txy(); break;
+        case 0xBA: tsx(); break;
         case 0xBB: tyx(); break;
         case 0xA8: tay(); break;
         case 0xAA: tax(); break;

@@ -233,6 +233,7 @@ void GUI::showPPURegisters() {
         ImGui::Text ("NMITIMEN: %02X", g_snes.ppu.nmitimen);
         ImGui::Text ("H/V IRQ setting: %s", hvConfigs[hvSetting]);
         ImGui::Text ("BG mode: %d", (int) g_snes.ppu.bgmode.mode);
+        ImGui::Text ("TM: %02X", g_snes.ppu.tm);
         
         ImGui::Checkbox ("NMIs enabled", &nmiEnabled);
         ImGui::SameLine();

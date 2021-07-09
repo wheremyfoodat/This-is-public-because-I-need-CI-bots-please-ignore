@@ -9,3 +9,5 @@ make -j2
 
 # Credits
 @ThePixelGamer - Mental support and saving me countless hours of debugging
+
+![Alt text](/resources/thracia.png?raw=true "Fire Emblem: Thracia 776")

@@ -34,7 +34,6 @@ static void Memory::mapFastmemPages() {
     u32 size = cart.romSize * 1024;  // size of the ROM in bytes
 
     if (cart.mapper == Mappers::LoROM) { // Map LoROM
-        if (cart.rom.size() >= 2 * megabyte) Helpers::panic ("LoROM ROM over 2MB");
         u32 romOffset = 0;
 
         // Map system area RAM and ROM to fastmem
@@ -62,13 +61,32 @@ static void Memory::mapFastmemPages() {
             }
         }
 
+        // Some LoROM games are bigger than MB (eg Super Metroid), these have bank 0-3Fh mapped in the 32K LoROM banks as usually
+        // and bank 40h and up each mapped twice in the 64K hirom banks.
+        if (size > 2 * megabyte) {
+            for (auto page = 0x800; page < 0x1000; page += 16) { // map HiROM ROM pages
+                for (auto i = 0; i < 16; i++, page++) { // Map 16 * 2KB pages, twice
+                    if (romOffset < size) {
+                        const auto pointer = &cart.rom[romOffset];
+
+                        pageTableRead[page] = pointer; // Map ROM page
+                        pageTableRead[page + 0x10] = pointer; // Duplicate it into upper 32KB of the bank
+                        pageTableRead[page + 0x1000] = pointer; // Map the pages to the top HiROM mirror as well
+                        pageTableRead[page + 0x1010] = pointer;
+
+                        romOffset += pageSize;
+                    }
+                }
+            }
+        }
+
         // map LoROM SRAM to fastmem
         const auto sramSize = cart.ramSize * 1024;
         if (sramSize != 0 && cart.hasBattery) {
             if (Helpers::popcnt32(sramSize) != 1) // assert ram size is a power of 2
                 Helpers::panic ("RAM size is not a power of 2!\n");
 
-            auto sramMask = sramSize - 1;
+            const auto sramMask = sramSize - 1;
             auto sramOffset = 0;
 
             for (auto page = 0xE00; page < 0xFB0;) { // Map SRAM pages as R/W
@@ -138,7 +156,6 @@ static void Memory::mapFastmemPages() {
         pageTableWrite[i] = &wram[(i - 0xFC0) * pageSize];
     }
 }
-static u8 sram[8192];
 
 static u8 Memory::read8 (u32 address) {
     const auto page = address >> 11; // Divide address by 2048 to get the page
@@ -193,7 +210,10 @@ static u8 Memory::readSlow (u32 address) {
             case 0x4B11: Helpers::warn ("Read from more weird invalid memory"); return 0;
 
             case 0x213F: Helpers::warn ("Read from PPU2 Status\n"); return 0;
-            case 0x2140: case 0x2141: case 0x2142: case 0x2143: return rand(); // APU ports
+
+            case 0x2140: case 0x2141: case 0x2142: case 0x2143: {
+                return rand(); // APU ports
+            }
 
             case 0x4210: { // rdnmi
                 const auto val = ppu->rdnmi;

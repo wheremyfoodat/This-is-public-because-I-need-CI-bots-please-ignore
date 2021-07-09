@@ -259,11 +259,26 @@ void tyx() {
 void tdc() {
     a.raw = dpOffset;
     setNZ16 (a.raw);
+    cycles = 2;
 }
 
 void tsc() {
     a.raw = sp;
     setNZ16 (a.raw);
+    cycles = 2;
+}
+
+void tsx() {
+    x = sp;
+    
+    if (psw.shortIndex) {
+        x &= 0xFF;
+        setNZ8 (x);
+    }
+
+    else
+        setNZ16 (x);
+    cycles = 2;
 }
 
 void mvn() {
