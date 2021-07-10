@@ -300,3 +300,23 @@ void mvn() {
         pc -= 3;
     cycles = 7; // 7 cycles per byte transferred
 }
+
+void mvp() {
+    const auto dest = y | (nextByte() << 16); // Destination address
+    const auto source = x | (nextByte() << 16); // Source address
+
+    Memory::write8 (dest, Memory::read8(source)); // Move a byte from source to dest
+    
+    x--; // Increment source and dest pointers, decrement byte counter
+    y--;
+    a.raw--;
+
+    if (psw.shortIndex) {
+        x &= 0xFF;
+        y &= 0xFF;
+    }
+
+    if (a.raw != 0xFFFF) // Continue copy loop until a == 0xFFFF
+        pc -= 3;
+    cycles = 7; // 7 cycles per byte transferred
+}

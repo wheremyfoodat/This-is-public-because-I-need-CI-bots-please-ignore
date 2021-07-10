@@ -19,6 +19,8 @@ void Cartridge::getROMInfo (json& dbEntry, std::filesystem::path& directory) {
         secondaryChip = ExpansionChips::C4;
     else if (expansion.find("Super FX2") != std::string::npos)
         secondaryChip = ExpansionChips::SuperFX2;
+    else if (expansion.find("DSP-1") != std::string::npos)
+        secondaryChip = ExpansionChips::DSP_1;
     else
         Helpers::panic ("Unrecognized coprocessor type.\n{}\n", expansion);
 
@@ -34,7 +36,7 @@ void Cartridge::getROMInfo (json& dbEntry, std::filesystem::path& directory) {
         Helpers::panic ("Unrecognized mapper type.\n{}\n", mapperName());
 
     // Set up exception vectors
-    switch (mapper) {
+    switch (mapper) { // TODO: Strip header for games like Street Fighter 2, which break otherwise
         case Mappers::LoROM:
             resetVector = (rom[0x7FFD] << 8) | rom[0x7FFC];
             copVector = (rom[0x7FE5] << 8) | rom[0x7FE4];
@@ -80,4 +82,6 @@ void Cartridge::setDefault() {
     brkVector = (rom[0x7FE7] << 8) | rom[0x7FE6];
     nmiVector = (rom[0x7FEB] << 8) | rom[0x7FEA];
     irqVector = (rom[0x7FEF] << 8) | rom[0x7FEE];
+
+    saveFile = SaveFile(); // Empty, non-existent savefile
 }

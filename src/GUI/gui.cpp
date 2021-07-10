@@ -89,7 +89,7 @@ void GUI::showMenuBar() {
                 0);
 
             if (file != nullptr) {  // Check if file dialog was canceled
-                auto path = std::filesystem::path(file);
+                auto path = std::filesystem::path (file);
                 Memory::loadROM (path);
                 g_snes.reset();
             }

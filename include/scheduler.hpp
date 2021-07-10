@@ -48,11 +48,9 @@ public:
     void pushEvent (EventTypes type, u64 cycle) {
         events.push (Event(type, cycle));
     }
-
-    static const u64 RENDERING_CYCLES = 1092; // 273 dots, each lasting 4 cycles
     
     Scheduler() : events(cmp) {
-        pushEvent (EventTypes::HBlank, RENDERING_CYCLES); // Add first event
+        pushEvent (EventTypes::HBlank, 1092); // Add first event
         pushEvent (EventTypes::Panic, UINT64_MAX); // A dummy event that's always in the queue
     }
 };

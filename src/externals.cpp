@@ -1,5 +1,6 @@
 #include "snes.hpp"
 #include "scheduler.hpp"
+#include "APU/spc700.hpp"
 #include "PPU/ppu.hpp"
 #include "memory.hpp"
 #include "dma.hpp"
@@ -15,6 +16,7 @@ PPU* Memory::ppu = nullptr;
 Scheduler* Memory::scheduler = nullptr;
 MathEngine Memory::mathEngine;
 DMAChannel Memory::dmaChannels[8];
+SPC700 Memory::apu;
 
 // Memory areas
 std::array <u8, 128 * Memory::kilobyte> Memory::wram;

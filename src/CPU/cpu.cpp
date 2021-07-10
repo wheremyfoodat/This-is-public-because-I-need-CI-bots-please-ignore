@@ -85,6 +85,7 @@ void CPU::executeOpcode (u8 opcode) {
         case 0x74: stz <AddressingModes::Direct_x>(); break;
         case 0x86: stx <AddressingModes::Direct>(); break;
         case 0x8E: stx <AddressingModes::Absolute>(); break;
+        case 0x96: stx <AddressingModes::Direct_y>(); break;
         case 0x9C: stz <AddressingModes::Absolute>(); break;
         case 0x9E: stz <AddressingModes::Absolute_x>(); break;
 
@@ -106,6 +107,7 @@ void CPU::executeOpcode (u8 opcode) {
         case 0x56: lsr <AddressingModes::Direct_x>(); break;
         case 0x5E: lsr <AddressingModes::Absolute_x>(); break;
 
+        case 0x44: mvp(); break;
         case 0x54: mvn(); break;
 
         case 0x66: ror <AddressingModes::Direct>(); break;

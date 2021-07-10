@@ -45,6 +45,8 @@ add_executable(SNES
     src/externals.cpp
 
     src/CPU/cpu.cpp
+    src/APU/spc700.cpp
+    src/APU/spc700_memory.cpp
     src/PPU/ppu.cpp
     src/GUI/gui.cpp
     src/GUI/threading.cpp

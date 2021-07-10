@@ -205,14 +205,20 @@ static u8 Memory::readSlow (u32 address) {
     if (bank <= 0x3F || (bank >= 0x80 && bank <= 0xBF)) { // See if the address is in system area
         switch (addr) {
             case 0x2000 ... 0x2100: case 0x2200 ... 0x4000: Helpers::warn ("Read from unmapped memory (Addr: {:02X}:{:04X})\n", bank, address); return 0;
-            case 0x6000 ... 0x7FFF: Helpers::warn ("Read from unimplemented expansion address: {:02X}:{:04X}\n", bank, address); return 0;
+            case 0x6000 ... 0x7FFF: Helpers::warn ("Read from unimplemented expansion address: {:02X}:{:04X}\n", bank, address); return rand();
             case 0x436C: case 0x436D: Helpers::warn ("Read from whatever the fuck that was\n"); return 0;
-            case 0x4B11: Helpers::warn ("Read from more weird invalid memory"); return 0;
+            case 0x4220: case 0x4221: case 0x4B11: Helpers::warn ("Read from more weird invalid memory"); return 0;
+
+            case 0x2134: return (u8) mathEngine.m7_product; // MPYL
+            case 0x2135: return (u8) (mathEngine.m7_product >> 8); // MPYM
+            case 0x2136: return (u8) (mathEngine.m7_product >> 16); // MPYH
 
             case 0x213F: Helpers::warn ("Read from PPU2 Status\n"); return 0;
 
-            case 0x2140: case 0x2141: case 0x2142: case 0x2143: {
-                return rand(); // APU ports
+            case 0x2140: case 0x2141: case 0x2142: case 0x2143: { // On reads from SPC700 ports, update the SPC700
+                const auto spcTimestamp = scheduler->timestamp * 102400 / 2147727; // Calculate the SPC timestamp up to which we should run it
+                apu.runUntil (spcTimestamp); // Run the SPC until the timestamp
+                return apu.outputPorts[address & 3]; // Return the value of the appropriate IO port
             }
 
             case 0x4210: { // rdnmi
@@ -241,6 +247,8 @@ static u8 Memory::readSlow (u32 address) {
             case 0x4218: return Joypads::pad1 & 0xFF; // Joypad 1 (Low) 
             case 0x4219: return Joypads::pad1 >> 8; // Joypad 1 (high)
             case 0x421A: case 0x421B: return 0; // Joypad 2 (Unimplemented)
+            case 0x421C: case 0x421D: return 0; // Joypad 3 (Unimplemented)
+            case 0x421E: case 0x421F: return 0; // Joypad 4 (Unimplemented)
 
             // Manual reading joypad ports
             case 0x4016: case 0x4017: return 0; // Joypad Input Register A and B (unimplemented)
@@ -249,7 +257,7 @@ static u8 Memory::readSlow (u32 address) {
         }
     }
 
-    else 
+    else
         Helpers::panic ("Read from unimplemented slow address {:06X}", address);
 }
 
@@ -363,6 +371,21 @@ static void Memory::writeIO (u16 address, u8 value) {
                 ppu->vmaddr.raw += ppu->vramStep;
         } break;
 
+        case 0x211B: // M7A
+            if (mathEngine.m7_multiplicand_latch) // On second write, write the top 8 bits of multiplicand
+                mathEngine.m7_multiplicand = (mathEngine.m7_multiplicand & 0xFF) | (value << 8);
+            else // On 1st write, write low 8 bits of multiplicand
+                mathEngine.m7_multiplicand = (mathEngine.m7_multiplicand & 0xFF00) | value;
+
+            mathEngine.m7_multiplicand_latch = !mathEngine.m7_multiplicand_latch;
+            mathEngine.m7_product = (s32) (s16) mathEngine.m7_multiplicand * (s32) (s8) mathEngine.m7_multiplier; // Writes to both M7A and M7B update product, instantly
+            break;
+        
+        case 0x211C: // M7B
+            mathEngine.m7_multiplier = value;
+            mathEngine.m7_product = (s32) (s16) mathEngine.m7_multiplicand * (s32) (s8) mathEngine.m7_multiplier;
+            break;
+
         case 0x2121: // CGADD
             ppu->paletteAddr = value;
             ppu->paletteLatch = false;
@@ -388,6 +411,12 @@ static void Memory::writeIO (u16 address, u8 value) {
         } break;
 
         case 0x212C: ppu->tm = value; break;
+
+        case 0x2140: case 0x2141: case 0x2142: case 0x2143: { // On reads from SPC700 ports, update the SPC700
+            const auto spcTimestamp = scheduler->timestamp * 102400 / 2147727; // Calculate the SPC timestamp up to which we should run it
+            apu.runUntil (spcTimestamp); // Run the SPC until the timestamp
+            apu.inputPorts [address & 3] = value; // Write to the SPC port
+        } break;
 
         case 0x2180: // WMDATA
             wram[wramAddress++] = value;

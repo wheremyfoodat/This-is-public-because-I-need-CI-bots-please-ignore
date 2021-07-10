@@ -3,6 +3,7 @@
 #include <vector>
 #include <filesystem>
 #include "nlohmann/json.hpp"
+#include "APU/spc700.hpp"
 #include "PPU/ppu.hpp"
 #include "dma.hpp"
 #include "cart.hpp"
@@ -20,11 +21,12 @@ namespace Memory {
     constexpr unsigned megabyte = 1024 * kilobyte;
 
     extern json gameDB; // Our game database containing info about each game's cart
-    extern Cartridge cart;
-    extern PPU* ppu;
-    extern Scheduler* scheduler;
-    extern MathEngine mathEngine;
-    extern DMAChannel dmaChannels[8];
+    extern Cartridge cart; // Our game cartridge
+    extern PPU* ppu;       // A pointer to the PPU
+    extern Scheduler* scheduler; // A pointer to the scheduler
+    extern MathEngine mathEngine; // A math engine that handles the multiplication/division ports and the M7 multiplication port
+    extern DMAChannel dmaChannels[8]; // DMA channels
+    extern SPC700 apu; // The audio processor
 
     // System memory
     extern std::array <u8, 128 * kilobyte> wram;
