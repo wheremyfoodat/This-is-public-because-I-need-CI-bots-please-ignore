@@ -32,6 +32,7 @@ union SPC_PSW {
 };
 
 class SPC700 {
+public:
     u8 a = 0; // Accumulator
     u8 x = 0, y = 0; // Index registers
 
@@ -39,6 +40,8 @@ class SPC700 {
     u16 dpOffset = 0; // 0 when PSW.P = 0, 0x100 when PSW.P = 1
     u16 pc = 0xFFC0; // APU reset vector
     SPC_PSW psw = SPC_PSW (0);// Program Status Word
+    
+private:
     u64 cycles = 0; // Current SPC700 timestamp
     
     constexpr static const u8 bootrom [64] = {205, 239, 189, 232, 0, 198, 29, 208, 252, 143, 170, 244, 143, 187, 245, 120, 204, 244, 208, 251, 47, 25, 235, 244, 208, 252, 126, 244, 208, 11, 228, 245, 203, 244, 215, 0, 252, 208, 243, 171, 1, 16, 239, 126, 244, 16, 235, 186, 246, 218, 0, 186, 244, 196, 244, 221, 93, 208, 219, 31, 0, 0, 192, 255 };

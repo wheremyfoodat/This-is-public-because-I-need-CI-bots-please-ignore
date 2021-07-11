@@ -3,11 +3,13 @@
 void lda_imm() {
     if (psw.shortAccumulator) {
         a.al = nextByte();
+        setNZ8 (a.al);
         cycles = 2;
     }
 
     else {
         a.raw = nextWord();
+        setNZ16 (a.raw);
         cycles = 3;
     }
 }
@@ -63,11 +65,13 @@ void ldy() {
 void ld_index_imm (u16& reg) {
     if (psw.shortIndex) {
         reg = nextByte();
+        setNZ8 (reg);
         cycles = 2;
     }
 
     else {
         reg = nextWord();
+        setNZ16 (reg);
         cycles = 3;
     }
 }

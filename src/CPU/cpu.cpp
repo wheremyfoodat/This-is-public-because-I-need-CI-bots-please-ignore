@@ -116,7 +116,6 @@ void CPU::executeOpcode (u8 opcode) {
         case 0x76: ror <AddressingModes::Direct_x>(); break;
         case 0x7E: ror <AddressingModes::Absolute_x>(); break;
 
-
         case 0x1A: ina(); break;
         case 0x3A: dea(); break;
         case 0x88: dey(); break;

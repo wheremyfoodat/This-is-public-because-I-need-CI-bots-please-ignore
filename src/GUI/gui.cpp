@@ -50,10 +50,12 @@ void GUI::update() {
     showDisplay();
 
     // Display our debugging windows
-    if (showCartWindow) 
-        showCartInfo();
     if (showRegisterWindow) 
         showRegisters();
+    if (showSPCWindow)
+        showSPCRegisters();
+    if (showCartWindow) 
+        showCartInfo();
     if (showDMAWindow)
         showDMAInfo();
     if (showPPUWindow)
@@ -112,6 +114,7 @@ void GUI::showMenuBar() {
 
         if (ImGui::BeginMenu("Debug")) {
             ImGui::MenuItem ("Show registers", nullptr, &showRegisterWindow);
+            ImGui::MenuItem ("Show SPC info", nullptr, &showSPCWindow);
             ImGui::MenuItem ("Show cart info", nullptr, &showCartWindow);
             ImGui::MenuItem ("Show DMA info", nullptr, &showDMAWindow);
             ImGui::MenuItem ("Show PPU registers", nullptr, &showPPUWindow);
@@ -179,6 +182,44 @@ void GUI::showRegisters() {
         
         if (ImGui::Button("Trace"))
             g_snes.step();
+        ImGui::End();
+    }
+}
+
+// TODO: More SPC stuff
+void GUI::showSPCRegisters() {
+    if (ImGui::Begin("SPC registers")) {
+        ImGui::Text ("A:  %02X", Memory::apu.a);
+        ImGui::Text ("X:  %02X", Memory::apu.x);
+        ImGui::Text ("Y:  %02X", Memory::apu.y);
+        ImGui::Text ("SP: %02X   ", Memory::apu.sp);
+        ImGui::SameLine();
+        ImGui::Text ("Direct page offset: %04X", Memory::apu.psw.directPage ? 0x100 : 0);
+        ImGui::Text ("PC: %04X ", Memory::apu.pc);
+        ImGui::SameLine();
+        ImGui::Text ("PSW: %02X", Memory::apu.psw.raw);
+
+        bool breakFlag = Memory::apu.psw.breakFlag;
+        bool carry = Memory::apu.psw.carry;
+        bool halfCarry = Memory::apu.psw.halfCarry;
+        bool sign = Memory::apu.psw.sign;
+        bool overflow = Memory::apu.psw.overflow;
+        bool zero = Memory::apu.psw.zero;
+        bool interruptEnable = Memory::apu.psw.interruptEnable;
+
+        ImGui::Checkbox ("Zero    ", &zero);
+        ImGui::SameLine();
+        ImGui::Checkbox ("Sign ", &sign);
+        ImGui::SameLine();
+        ImGui::Checkbox ("Carry", &carry);
+        ImGui::SameLine();
+        ImGui::Checkbox ("Half Carry", &halfCarry);
+        ImGui::Checkbox ("Overflow", &overflow);
+        ImGui::SameLine();
+        ImGui::Checkbox ("Break", &breakFlag);
+        ImGui::SameLine();
+        ImGui::Checkbox ("Interrupt enable", &interruptEnable);
+
         ImGui::End();
     }
 }

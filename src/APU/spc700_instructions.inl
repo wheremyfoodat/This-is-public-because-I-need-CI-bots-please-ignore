@@ -31,6 +31,14 @@ void mova_mem() {
 }
 
 template <SPC_AddressingModes addrMode>
+void movx_mem() {
+    const auto address = getAddress <addrMode>();
+    const auto val = read (address);
+    setNZ (val);
+    x = val;
+}
+
+template <SPC_AddressingModes addrMode>
 void movy_mem() {
     const auto address = getAddress <addrMode>();
     const auto val = read (address);
@@ -242,6 +250,16 @@ void adc_mem() {
     a = adc (a, value);
 }
 
+template <SPC_Operands operand>
+void adc_dp() {
+    const auto operand2 = getOperand <operand>(); 
+    const auto destAddress = getAddress <SPC_AddressingModes::Direct>();
+    
+    auto operand1 = read (destAddress);
+    operand1 = adc (operand1, operand2);
+    write (destAddress, operand1);
+}
+
 template <SPC_AddressingModes addrMode>
 void sbc_mem() {
     const auto value = read (getAddress<addrMode>());
@@ -280,6 +298,18 @@ void lsr_accumulator() {
     psw.carry = a & 1; // Store LSB of a into carry
     a >>= 1; // Left shift
     setNZ (a); // Set other flags
+}
+
+template <SPC_AddressingModes addrMode>
+void ror_mem() {
+    const u8 carry = psw.carry;
+    const auto address = getAddress <addrMode>();
+    auto val = read (address); // Read memory value
+
+    psw.carry = val & 1; // Store lsb of value into carry
+    val = (val >> 1) | (carry << 7); // Rotate with carry
+    setNZ (val); // Set other flags
+    write (address, val); // Writeback result
 }
 
 void ror_accumulator() {
@@ -393,6 +423,16 @@ void subw() {
     y = result >> 8;
 }
 
+void cmpw() {
+    const u16 ya = (y << 8) | a;
+    const u16 operand2 = read16 (nextByte() + dpOffset);
+    const u16 result = ya - operand2;
+
+    psw.carry = ya >= operand2;
+    psw.zero = result == 0;
+    psw.sign = result >> 15;
+}
+
 void mul() {
     const u16 result = (u16) y * (u16) a; // u16 YA = y * a
     a = result & 0xFF; // a = low 8 bits of result
@@ -461,6 +501,24 @@ void clr() {
 
     val &= ~(1 << bit); // Clear the specified bit in the value
     write (address, val); // Write the bit back
+}
+
+void tclr1() {
+    const auto address = getAddress <SPC_AddressingModes::Absolute>();
+    const auto value = read (address);
+
+    write (address, value & ~a);
+    const u8 result = a - value;
+    setNZ (result);
+}
+
+void tset1() {
+    const auto address = getAddress <SPC_AddressingModes::Absolute>();
+    const auto value = read (address);
+
+    write (address, a | value);
+    const u8 result = a - value;
+    setNZ (result);
 }
 
 // Exchange nibbles of a

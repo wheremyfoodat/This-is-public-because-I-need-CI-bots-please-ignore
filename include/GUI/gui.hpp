@@ -23,6 +23,7 @@ public:
 private:
     void showMenuBar();
     void showRegisters();
+    void showSPCRegisters();
     void showCartInfo();
     void showDisplay();
     void showDMAInfo();
@@ -32,6 +33,7 @@ private:
     void waitEmuThread();
 
     bool showRegisterWindow = false;
+    bool showSPCWindow = false;
     bool showCartWindow = false;
     bool showMemoryEditor = false;
     bool showVramEditor = false;

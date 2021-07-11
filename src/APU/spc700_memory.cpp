@@ -6,7 +6,7 @@ u8 SPC700::read (u16 address) {
         switch (address) {
             case 0xF0: case 0xF1: return 0; // Write-only
             case 0xF2: return dspRegisterIndex;  // DSP register index
-            case 0xF3: Helpers::warn ("[SPC700] Read from DSP data   PC: {:02X}\n", pc); return 0;
+            case 0xF3: Helpers::warn ("[SPC700] Read from DSP data   PC: {:02X}\nDSP Register: {:02X}\n", pc, dspRegisterIndex); return 0;
 
             case 0xF4: return inputPorts[0]; // CPU -> SPC communication input ports. The CPU writes here, the SPC reads from here
             case 0xF5: return inputPorts[1];
@@ -67,7 +67,7 @@ void SPC700::write (u16 address, u8 value) {
                 break;
 
             case 0xF2: dspRegisterIndex = value; break;
-            case 0xF3: break; // DSP register data. We currently don't emulate the DSP :(
+            case 0xF3: Helpers::warn ("Wrote {:02X} to DSP register {:02X}\n", value, dspRegisterIndex); break; // DSP register data. We currently don't emulate the DSP :(
 
             case 0xF4: outputPorts[0] = value; break;  // CPU -> SPC communication output ports. The SPC writes here, the CPU reads from here
             case 0xF5: outputPorts[1] = value; break;

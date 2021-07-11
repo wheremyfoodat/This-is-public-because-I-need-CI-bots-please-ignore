@@ -24,6 +24,9 @@ void SPC700::executeOpcode() {
         case 0xD2: clr <6>(); break;
         case 0xF2: clr <7>(); break;
 
+        case 0x0E: tset1(); break;
+        case 0x4E: tclr1(); break;
+
         case 0x5D: mov <SPC_Operands::Register_x, SPC_Operands::Register_a>(); break;
         case 0xBD: mov <SPC_Operands::Register_sp, SPC_Operands::Register_x>(); break;
         case 0xCD: mov <SPC_Operands::Register_x, SPC_Operands::Immediate>(); break;
@@ -41,6 +44,7 @@ void SPC700::executeOpcode() {
         case 0xC4: mov_mem <SPC_AddressingModes::Direct, SPC_Operands::Register_a>(); break;
         case 0xC5: mov_mem <SPC_AddressingModes::Absolute, SPC_Operands::Register_a>(); break;
         case 0xC6: mov_mem <SPC_AddressingModes::Indirect, SPC_Operands::Register_a>(); break;
+        case 0xC7: mov_mem <SPC_AddressingModes::Direct_x, SPC_Operands::Register_a>(); break;
         case 0xC9: mov_mem <SPC_AddressingModes::Absolute, SPC_Operands::Register_x>(); break;
         case 0xCB: mov_mem <SPC_AddressingModes::Direct, SPC_Operands::Register_y>(); break;
         case 0xCC: mov_mem <SPC_AddressingModes::Absolute, SPC_Operands::Register_y>(); break;
@@ -58,8 +62,18 @@ void SPC700::executeOpcode() {
         case 0xF5: mova_mem <SPC_AddressingModes::Absolute_x>(); break;
         case 0xF6: mova_mem <SPC_AddressingModes::Absolute_y>(); break;
         case 0xF7: mova_mem <SPC_AddressingModes::Indirect_y>(); break;
+        case 0xE9: movx_mem <SPC_AddressingModes::Absolute>(); break;
         case 0xEC: movy_mem <SPC_AddressingModes::Absolute>(); break;
         case 0xFB: movy_mem <SPC_AddressingModes::Direct_x>(); break;
+
+        case 0xE6: a = read (x + dpOffset); setNZ(a); break; // mov a, (x)
+        case 0xBF: a = read (x + dpOffset); x++; setNZ(a); break; // mov a, (x++)
+
+        case 0xFA: { // mov (dd), (ds)
+            const auto source = getOperand <SPC_Operands::Direct_byte>();
+            const auto destAddress = getAddress <SPC_AddressingModes::Direct>(); 
+            write (destAddress, source);
+        } break;
 
         case 0xAF: write (x + dpOffset, a); x++; break; // mov (x+), a
 
@@ -84,12 +98,16 @@ void SPC700::executeOpcode() {
         case 0x8C: dec_mem <SPC_AddressingModes::Absolute>(); break;
         case 0x9B: dec_mem <SPC_AddressingModes::Direct_x>(); break;
 
+        case 0x69: cmp_mem_reg <SPC_AddressingModes::Direct, SPC_Operands::Direct_byte>(); break;
         case 0x78: cmp_mem_reg <SPC_AddressingModes::Direct, SPC_Operands::Immediate>(); break;
                 
+        case 0x1E: cmp_reg_mem <SPC_Operands::Register_x, SPC_AddressingModes::Absolute>(); break;
+        case 0x3E: cmp_reg_mem <SPC_Operands::Register_x, SPC_AddressingModes::Direct>(); break;
         case 0x5E: cmp_reg_mem <SPC_Operands::Register_y, SPC_AddressingModes::Absolute>(); break;
         case 0x64: cmp_reg_mem <SPC_Operands::Register_a, SPC_AddressingModes::Direct>(); break;
         case 0x65: cmp_reg_mem <SPC_Operands::Register_a, SPC_AddressingModes::Absolute>(); break;
         case 0x75: cmp_reg_mem <SPC_Operands::Register_a, SPC_AddressingModes::Absolute_x>(); break;
+        case 0x76: cmp_reg_mem <SPC_Operands::Register_a, SPC_AddressingModes::Absolute_y>(); break;
         case 0x7E: cmp_reg_mem <SPC_Operands::Register_y, SPC_AddressingModes::Direct>(); break;
 
         case 0x68: cmp_reg <SPC_Operands::Register_a, SPC_Operands::Immediate>(); break;
@@ -98,12 +116,15 @@ void SPC700::executeOpcode() {
 
         case 0x0B: asl_mem <SPC_AddressingModes::Direct>(); break;
         case 0x0C: asl_mem <SPC_AddressingModes::Absolute>(); break;
+        case 0x1B: asl_mem <SPC_AddressingModes::Direct_x>(); break;
         case 0x1C: asl_accumulator(); break;
 
         case 0x4B: lsr_mem <SPC_AddressingModes::Direct>(); break;
         case 0x4C: lsr_mem <SPC_AddressingModes::Absolute>(); break;
         case 0x5C: lsr_accumulator(); break;
 
+        case 0x6B: ror_mem <SPC_AddressingModes::Direct>(); break;
+        case 0x6C: ror_mem <SPC_AddressingModes::Absolute>(); break;
         case 0x7C: ror_accumulator(); break;
 
         case 0x04: ora <SPC_AddressingModes::Direct>(); break;
@@ -154,17 +175,19 @@ void SPC700::executeOpcode() {
         case 0x95: adc_mem <SPC_AddressingModes::Absolute_x>(); break;
         case 0x96: adc_mem <SPC_AddressingModes::Absolute_y>(); break;
         case 0x97: adc_mem <SPC_AddressingModes::Indirect_y>(); break;
+        case 0x98: adc_dp <SPC_Operands::Immediate>(); break; // adc dp, #imm
 
         case 0xA4: sbc_mem <SPC_AddressingModes::Direct>(); break;
         case 0xA5: sbc_mem <SPC_AddressingModes::Absolute>(); break;
         case 0xA6: sbc_mem <SPC_AddressingModes::Indirect>(); break;
         case 0xA7: sbc_mem <SPC_AddressingModes::Direct_indirect_x>(); break;
-        case 0xA8: a = sbc (a, nextByte()); // SBC a, #imm
+        case 0xA8: a = sbc (a, nextByte()); break; // SBC a, #imm
         case 0xB4: sbc_mem <SPC_AddressingModes::Direct_x>(); break;
         case 0xB5: sbc_mem <SPC_AddressingModes::Absolute_x>(); break;
         case 0xB6: sbc_mem <SPC_AddressingModes::Absolute_y>(); break;
         case 0xB7: sbc_mem <SPC_AddressingModes::Indirect_y>(); break;
 
+        case 0x5A: cmpw(); break;
         case 0x7A: addw(); break;
         case 0x9A: subw(); break;
         case 0x9E: div(); break;
@@ -178,6 +201,8 @@ void SPC700::executeOpcode() {
         case 0xAE: a = pop8(); break;
         case 0xCE: x = pop8(); break;
         case 0xEE: y = pop8(); break;
+
+        case 0x8E: psw.raw = pop8(); dpOffset = psw.directPage ? 0x100 : 0; break;
 
         case 0x10: jumpRelative (!psw.sign); break; // bpl
         case 0x30: jumpRelative (psw.sign); break;  // bmi 
@@ -290,7 +315,7 @@ void SPC700::executeOpcode() {
                 psw.carry = !psw.carry;
         } break;
 
-        default: Helpers::panic ("[SPC700] Unimplemented opcode: {:02X}\n", opcode);
+        default: Helpers::panic ("[SPC700] Unimplemented opcode: {:02X}\n", opcode); break;
     }
 }
 
