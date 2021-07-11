@@ -1,7 +1,7 @@
 #include "memory.hpp"
 #include "dma.hpp"
 
-static void Memory::doGPDMA (int channel) {
+void Memory::doGPDMA (int channel) {
     const auto params = dmaChannels[channel].params();
     const auto transferType = params.direction ? DMADirection::IOToCPU : DMADirection::CPUToIO;
     auto counter = dmaChannels[channel].byteCounter();
