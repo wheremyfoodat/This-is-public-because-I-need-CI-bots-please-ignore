@@ -61,6 +61,14 @@ u8 dec (u8 val) {
     return result;
 }
 
+template <SPC_AddressingModes addrMode>
+void dec_mem() {
+    const auto address = getAddress <addrMode>();
+    auto value = read (address); // Read memory value
+    value = dec (value); // Decrement and set flags
+    write (address, value); // Write back value
+}
+
 u8 inc (u8 val) {
     const u8 result = val + 1;
     setNZ (result);
@@ -71,10 +79,9 @@ u8 inc (u8 val) {
 template <SPC_AddressingModes addrMode>
 void inc_mem() {
     const auto address = getAddress <addrMode>();
-    u8 value = read (address);
-
-    value = inc (value);
-    write (address, value);
+    auto value = read (address); // Read memory value
+    value = inc (value); // Increment and set flags
+    write (address, value); // Write back value
 }
 
 template <SPC_AddressingModes addrMode, SPC_Operands operand>
@@ -258,9 +265,27 @@ void asl_accumulator() {
     setNZ (a); // Set other flags
 }
 
+template <SPC_AddressingModes addrMode>
+void lsr_mem() {
+    const auto address = getAddress <addrMode>();
+    auto val = read (address); // Read memory value
+    psw.carry = val & 1; // Store lsb of value into carry
+
+    val >>= 1; // Left shift
+    setNZ (val); // Set other flags
+    write (address, val); // Write back value
+}
+
 void lsr_accumulator() {
     psw.carry = a & 1; // Store LSB of a into carry
     a >>= 1; // Left shift
+    setNZ (a); // Set other flags
+}
+
+void ror_accumulator() {
+    const u8 carry = psw.carry;
+    psw.carry = a & 1; // Store LSB of a into carry
+    a = (a >> 1) | (carry << 7); // Rotate with carry
     setNZ (a); // Set other flags
 }
 
@@ -295,6 +320,17 @@ void dbnz_dp() {
     if (val != 0) { // Branch if not 0
         pc += displacement;
         cycles += 2;
+    }
+}
+
+template <int bit>
+void bbs() {
+    const auto val = read (nextByte() + dpOffset);
+    const auto displacement = (s8) nextByte();
+
+    if ((val & (1 << bit)) != 0) { // Branch if bit is set
+        cycles += 2;
+        pc += displacement;
     }
 }
 
@@ -343,13 +379,49 @@ void addw() {
     y = result >> 8;
 }
 
+void subw() {
+    const auto operand2 = read16 (nextByte() + dpOffset); // Read a word from direct page
+    const auto operand2_low = (u8) operand2;
+    const auto operand2_high = operand2 >> 8;
+    
+    psw.carry = 1; // Break down carry to 2 SBCs like hardware does
+    u16 result = sbc (a, operand2_low);
+    result |= sbc (y, operand2_high) << 8;
+
+    psw.zero = (result == 0);
+    a = result & 0xFF; // Set YA
+    y = result >> 8;
+}
+
 void mul() {
     const u16 result = (u16) y * (u16) a; // u16 YA = y * a
-    psw.zero = (result == 0); // Calculate flags based on 16-bit value
-    psw.sign = result >> 15;
-
     a = result & 0xFF; // a = low 8 bits of result
     y = result >> 8; // y = top 8 bits
+
+    setNZ (y); // NZ are only set depending on Y in mul!
+}
+
+// Based on the division algorithm in bsnes 
+// https://github.com/bsnes-emu/bsnes/blob/64d484476dd1ff5e94f640ddef5f7233d0404134/bsnes/processor/spc700/instructions.cpp#L348-L377
+// This code relies heavily on C++ integer promotion semantics
+// TODO: Fix
+void div() {
+    u16 ya = (y << 8) | a;
+
+    psw.halfCarry = (x & 0xF) < (y & 0xF); // Calculate half carry flag
+    psw.overflow = y >= x; // Calculate overflow flag
+
+    if (y < (x << 1)) {
+        a = ya / x; // A = Quotient of ya / x
+        y = ya % x; // Y = Remainder of ya / x
+    }
+
+    else { // ??????????????
+        a = 255 - (ya - (x << 9)) / (256 - x);
+        y = x + (ya - (x << 9)) % (256 - x);
+    }
+
+    setNZ (a); // Set Zero and Sign flags based on quotient
 }
 
 void incw() {
@@ -379,6 +451,15 @@ void set() {
     auto val = read (address);
 
     val |= 1 << bit; // Set the specified bit in the value
+    write (address, val); // Write the bit back
+}
+
+template <int bit>
+void clr() {
+    const auto address = nextByte() + dpOffset;
+    auto val = read (address);
+
+    val &= ~(1 << bit); // Clear the specified bit in the value
     write (address, val); // Write the bit back
 }
 
