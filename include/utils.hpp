@@ -1,5 +1,4 @@
 #pragma once
-#define FMT_HEADER_ONLY 1
 #include <iostream>
 #include <vector>
 #include <fstream>
