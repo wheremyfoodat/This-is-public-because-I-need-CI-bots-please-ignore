@@ -35,7 +35,6 @@ include_directories(third-party/json)
 include_directories(third-party/sha1)
 include_directories(third-party/mio/single_include)
 
-add_subdirectory(third-party/fmt)
 add_subdirectory(third-party/imgui-sfml)
 
 add_executable(SNES
