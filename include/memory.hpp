@@ -39,26 +39,26 @@ namespace Memory {
     static std::array <uint8_t*, pageCount> pageTableWrite; // Page table for writes
     static u32 wramAddress = 0;
 
-    static void loadROM (std::filesystem::path directory);
-    static u8 read8 (u32 address); // Memory read handlers
-    static u16 read16 (u32 address);
+    void loadROM (std::filesystem::path directory);
+    u8 read8 (u32 address); // Memory read handlers
+    u16 read16 (u32 address);
 
-    static void write8 (u32 address, u8 value); // Memory write handlers
-    static void write16 (u32 address, u16 value);
+    void write8 (u32 address, u8 value); // Memory write handlers
+    void write16 (u32 address, u16 value);
 
     template <bool isDebugger = false> // Slow memory handlers for stuff like IO, where fastmem doesn't work
-    static u8 readSlow (u32 address); 
+    u8 readSlow (u32 address); 
 
     template <bool isDebugger = false>
-    static void writeSlow (u32 address, u8 value);
+    void writeSlow (u32 address, u8 value);
 
     template <bool isDebugger>
     void writeIO (u16 address, u8 value);
     
     static void writeIODMA (u16 address, u8 value) { writeIO <false> (address, value); } // Hack to make the linker happy
 
-    static u8 read8Debugger (const u8* buffer, size_t address); // Frontend memory editor functions
-    static void write8Debugger (u8* buffer, size_t address, u8 data);
+    u8 read8Debugger (const u8* buffer, size_t address); // Frontend memory editor functions
+    void write8Debugger (u8* buffer, size_t address, u8 data);
 
     void mapFastmemPages();
 }; // End Namespace Memory
