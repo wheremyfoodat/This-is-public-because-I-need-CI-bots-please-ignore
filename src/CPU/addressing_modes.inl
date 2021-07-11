@@ -42,7 +42,7 @@ u32 getAddress() {
         else if constexpr (type == AccessTypes::RMW && is16Bit) // Normally being 16-bit adds 2 cycles, but one has already been added already
             cycles += 3;
 
-        return nextWord() | dbOffset;
+        return (u32) nextWord() | dbOffset;
     }
 
     else if constexpr (addrMode == AddressingModes::Absolute_x) {
@@ -109,7 +109,7 @@ u32 getAddress() {
         else if constexpr (type == AccessTypes::RMW && is16Bit) // Normally being 16-bit adds 2 cycles, but one has already been added already
             cycles += 3;
 
-        return (u32) nextByte() + (u32) dpOffset;
+        return (u16) ((u16) nextByte() + dpOffset);
     }
 
     else if constexpr (addrMode == AddressingModes::Direct_x) {
@@ -123,7 +123,7 @@ u32 getAddress() {
         if (dpOffset & 0xFF) // add an extra cycle if the low byte of the direct page offset is non-zero
             cycles++;
 
-        return ((u32) nextByte() + (u32) dpOffset + (u32) x) & 0xFFFFFF;
+        return (u16) ((u16) nextByte() + dpOffset + x);
     }
 
     else if constexpr (addrMode == AddressingModes::Direct_y) {
@@ -131,7 +131,7 @@ u32 getAddress() {
         if (dpOffset & 0xFF) // add an extra cycle if the low byte of the direct page offset is non-zero
             cycles++;
 
-        return ((u32) nextByte() + (u32) dpOffset + (u32) y) & 0xFFFFFF;
+        return (u16) ((u16) nextByte() + dpOffset + y);
     }
 
     else if constexpr (addrMode == AddressingModes::Direct_indirect) {
@@ -139,7 +139,7 @@ u32 getAddress() {
         if (dpOffset & 0xFF) // add an extra cycle if the low byte of the direct page offset is non-zero
             cycles++;
 
-        const auto pointer = (u32) nextByte() + (u32) dpOffset;
+        const u16 pointer = (u16) nextByte() + dpOffset;
         return (u32) Memory::read16(pointer) | dbOffset;
     }
 
@@ -148,7 +148,7 @@ u32 getAddress() {
         if (dpOffset & 0xFF) // add an extra cycle if the low byte of the direct page offset is non-zero
             cycles++;
 
-        const auto pointer = (u32) nextByte() + (u32) dpOffset;
+        const u16 pointer = (u16) nextByte() + dpOffset;
         return (u32) Memory::read16(pointer) | ((u32) Memory::read8 (pointer + 2) << 16);
     }
 
@@ -157,15 +157,15 @@ u32 getAddress() {
         if (dpOffset & 0xFF) // add an extra cycle if the low byte of the direct page offset is non-zero
             cycles++;
 
-        const auto address = (u32) nextByte() + (u32) dpOffset + (u32) x;
+        const u16 address = (u16) nextByte() + dpOffset + x;
         return (u32) Memory::read16(address) | dbOffset;
     }
 
     else if constexpr (addrMode == AddressingModes::Direct_indirect_y) {
         cycles += is16Bit ? 6 : 5;
-        const auto pointer = (u32) nextByte() + (u32) dpOffset;
-        const auto address = Memory::read16(pointer) | dbOffset;
-        const auto finalAddress = (address + y) & 0xFFFFFF;
+        const u16 pointer = (u16) nextByte() + dpOffset;
+        const u32 address = Memory::read16(pointer) | dbOffset;
+        const u32 finalAddress = (address + y) & 0xFFFFFF;
 
         if (dpOffset & 0xFF) // add an extra cycle if the low byte of the direct page offset is non-zero
             cycles++;
@@ -187,7 +187,7 @@ u32 getAddress() {
         if (dpOffset & 0xFF) // add an extra cycle if the low byte of the direct page offset is non-zero
             cycles++;
 
-        const u32 pointer = (u32) nextByte() + (u32) dpOffset;
+        const u16 pointer = (u16) nextByte() + dpOffset;
         const u32 address = (u32) Memory::read16(pointer) | (Memory::read8(pointer + 2) << 16);
         return (address + y) & 0xFFFFFF;
     }
@@ -201,8 +201,8 @@ u32 getAddress() {
     else if constexpr (addrMode == AddressingModes::Stack_relative_indirect_indexed) {
         cycles += is16Bit ? 8 : 7;
 
-        const auto pointer = ((u32) nextByte() + (u32) sp) & 0xFFFF;
-        return (Memory::read16(pointer) + dbOffset) & 0xFFFFFF;
+        const u16 pointer = (u16) nextByte() + sp;
+        return (Memory::read16(pointer) + dbOffset + y) & 0xFFFFFF;
     }
 
     else if constexpr (addrMode == AddressingModes::Absolute_indirect) { // This is jmp-only. Cycles are handled in the jmp implementation
