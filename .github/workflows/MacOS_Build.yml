@@ -22,7 +22,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Install dependencies
-      run: brew install sfml
+      run: brew install sfml fmt
       
     - name: Fetch submodules
       run: git submodule update --init --recursive --remote
