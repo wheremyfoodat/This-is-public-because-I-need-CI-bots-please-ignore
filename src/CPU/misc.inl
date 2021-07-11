@@ -20,10 +20,8 @@ void xce() {
 
 // Exchange accumulator low and high
 void xba() {
-    const auto temp = a.al;
-    a.al = a.ah;
-    a.ah = temp;
-
+    a.raw = (a.raw >> 8) | (a.raw << 8); // Swap bottom and top byte
+    setNZ8 (a.al);
     cycles = 3;
 }
 
