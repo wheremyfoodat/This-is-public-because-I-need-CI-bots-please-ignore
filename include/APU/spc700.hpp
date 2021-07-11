@@ -15,6 +15,20 @@ union SPC_PSW {
     BitField <2, 1, u8> interruptEnable; // The SNES APU has no interrupt sources, so kinda useless
     BitField <1, 1, u8> zero; // Set if result of last operation is 0
     BitField <0, 1, u8> carry; // Set if carry occured
+
+    SPC_PSW (u8 value) {
+        raw = value;
+    }
+
+    SPC_PSW& operator=(SPC_PSW& other) {
+        raw = other.raw;
+        return *this;
+    }
+
+    SPC_PSW& operator=(const SPC_PSW& other) {
+        raw = other.raw;
+        return *this;
+    }
 };
 
 class SPC700 {
@@ -24,10 +38,10 @@ class SPC700 {
     u8 sp = 0; // Stack pointer
     u16 dpOffset = 0; // 0 when PSW.P = 0, 0x100 when PSW.P = 1
     u16 pc = 0xFFC0; // APU reset vector
-    SPC_PSW psw { .raw = 0 }; // Program Status Word
+    SPC_PSW psw = SPC_PSW (0);// Program Status Word
     u64 cycles = 0; // Current SPC700 timestamp
     
-    const u8 bootrom [64] = {205, 239, 189, 232, 0, 198, 29, 208, 252, 143, 170, 244, 143, 187, 245, 120, 204, 244, 208, 251, 47, 25, 235, 244, 208, 252, 126, 244, 208, 11, 228, 245, 203, 244, 215, 0, 252, 208, 243, 171, 1, 16, 239, 126, 244, 16, 235, 186, 246, 218, 0, 186, 244, 196, 244, 221, 93, 208, 219, 31, 0, 0, 192, 255 };
+    constexpr static const u8 bootrom [64] = {205, 239, 189, 232, 0, 198, 29, 208, 252, 143, 170, 244, 143, 187, 245, 120, 204, 244, 208, 251, 47, 25, 235, 244, 208, 252, 126, 244, 208, 11, 228, 245, 203, 244, 215, 0, 252, 208, 243, 171, 1, 16, 239, 126, 244, 16, 235, 186, 246, 218, 0, 186, 244, 196, 244, 221, 93, 208, 219, 31, 0, 0, 192, 255 };
     std::array <u8, 64 * 1024> ram;
 
      // SPC timers. The template arguments are the frequencies, calculated as SPC_CLOCK / TIMER_CLOCK
@@ -41,6 +55,7 @@ class SPC700 {
     u8 read (u16 address);
     u16 read16 (u16 address);
     void write (u16 address, u8 value);
+    void write16 (u16 address, u16 value);
     
     u8 nextByte() {
         const u8 val = read (pc);
@@ -64,12 +79,24 @@ class SPC700 {
         sp -= 1;
     }
 
+    void push16 (u16 val) {
+        push8 (val >> 8);
+        push8 (val & 0xFF);
+    }
+
     u8 pop8() {
         sp += 1;
         return read (0x100 + sp); // The stack is always from 0x100 to 0x1FF!
     }
 
-    const u16 cycleTable[256] = { // Add 2 for taken conditional branches!
+    u16 pop16() {
+        u16 val = pop8();
+        val |= pop8() << 8;
+
+        return val;
+    }
+
+    constexpr static const u16 cycleTable[256] = { // Add 2 for taken conditional branches!
         2,8,4,5,3,4,3,6, 2,6,5,4,5,4,6,8,   // $00-$0f
         2,8,4,5,4,5,5,6, 5,5,6,5,2,2,4,6,   // $10-$1f
         2,8,4,5,3,4,3,6, 2,6,5,4,5,4,5,4,   // $20-$2f

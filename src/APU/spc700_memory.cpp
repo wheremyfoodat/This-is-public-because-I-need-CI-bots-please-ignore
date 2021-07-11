@@ -2,13 +2,17 @@
 #include "utils.hpp"
 
 u8 SPC700::read (u16 address) {
-    if (address >= 0xF0 && address <= 0xFF) { // Hande IO ports
+    if (address >= 0xF0 && address <= 0xFF) { // Handle IO ports
         switch (address) {
             case 0xF0: case 0xF1: return 0; // Write-only
-            case 0xF4: return inputPorts[0];
+            case 0xF2: return dspRegisterIndex;  // DSP register index
+            case 0xF3: Helpers::warn ("[SPC700] Read from DSP data   PC: {:02X}\n", pc); return 0;
+
+            case 0xF4: return inputPorts[0]; // CPU -> SPC communication input ports. The CPU writes here, the SPC reads from here
             case 0xF5: return inputPorts[1];
             case 0xF6: return inputPorts[2];
             case 0xF7: return inputPorts[3];
+            case 0xF8: case 0xF9: return ram[address]; // These ports are simply r/w and do nothing, so we emulate them as RAM
 
             case 0xFD: // Timer 0 output
                 timer0.update (cycles); // Lazily update it
@@ -64,10 +68,13 @@ void SPC700::write (u16 address, u8 value) {
 
             case 0xF2: dspRegisterIndex = value; break;
             case 0xF3: break; // DSP register data. We currently don't emulate the DSP :(
-            case 0xF4: outputPorts[0] = value; break;
+
+            case 0xF4: outputPorts[0] = value; break;  // CPU -> SPC communication output ports. The SPC writes here, the CPU reads from here
             case 0xF5: outputPorts[1] = value; break;
             case 0xF6: outputPorts[2] = value; break;
             case 0xF7: outputPorts[3] = value; break;
+            case 0xF8: case 0xF9: ram[address] = value; break; // These ports are simply r/w and do nothing, so we emulate them as RAM
+
             case 0xFA: // Timer 0 divider
                 timer0.update (cycles);
                 timer0.divider = value ? value : 256; // A divider of 0 means 256
@@ -88,4 +95,9 @@ void SPC700::write (u16 address, u8 value) {
     }
 
     else ram[address] = value;
+}
+
+void SPC700::write16 (u16 address, u16 value) {
+    write (address, value & 0xFF);
+    write (address + 1, value >> 8);
 }

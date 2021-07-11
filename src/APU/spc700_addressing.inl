@@ -35,6 +35,15 @@ u16 getAddress() {
 
     else if constexpr (addrMode == SPC_AddressingModes::Direct)
         return dpOffset + nextByte();
+    else if constexpr (addrMode == SPC_AddressingModes::Direct_x) // This should wrap in the current direct page!
+        return dpOffset + ((nextByte() + x) & 0xFF);
+    else if constexpr (addrMode == SPC_AddressingModes::Direct_y) // This should wrap in the current direct page!
+        return dpOffset + ((nextByte() + y) & 0xFF);
+    else if constexpr (addrMode == SPC_AddressingModes::Direct_indirect_x) {
+        const u16 address = dpOffset + ((nextByte() + x) & 0xFF);  // This should wrap in the current direct page!
+        return read16 (address);
+    }
+
     else if constexpr (addrMode == SPC_AddressingModes::Indirect)
         return dpOffset + x;
     else if constexpr (addrMode == SPC_AddressingModes::Indirect_y)

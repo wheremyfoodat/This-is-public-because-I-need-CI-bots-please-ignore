@@ -20,6 +20,7 @@ public:
         if (!enabled) return; // Do not do anything if timer is disabled
 
         const u64 cyclesPassed = currentTimestamp - lastAccessTimestamp; // Calculate the counter value algorithmically, depending on the divider and how many cycles passed
+        lastAccessTimestamp = currentTimestamp;
         internalCyclesPassed += cyclesPassed;
 
         internalCounter += (internalCyclesPassed >> shift);
@@ -32,6 +33,7 @@ public:
     }
 
     void disable (u64 currentTimestamp) {
+        update (currentTimestamp);
         enabled = false;
 
         internalCounter = 0;
@@ -42,9 +44,12 @@ public:
     // However, bsnes source indicates this is wrong, and the timer should be reset when enabled
     // https://github.com/bsnes-emu/bsnes/blob/64d484476dd1ff5e94f640ddef5f7233d0404134/bsnes/sfc/smp/io.cpp#L97
     void enable (u64 currentTimestamp) {
-        value = 0; // Turning on a timer resets it!
         lastAccessTimestamp = currentTimestamp;
         enabled = true;
+
+        internalCounter = 0; // Turning on a timer resets it!
+        internalCyclesPassed = 0;
+        value = 0; 
     }
 
     // Reading a timer returns its value, then resets it.

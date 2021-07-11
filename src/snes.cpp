@@ -13,8 +13,9 @@ SNES::SNES() {
     Memory::scheduler = &scheduler;
 }
 
-void SNES::reset() {
+void SNES::reset() { // TODO: Reset APU, PPU, scheduler, etc
     cpu.reset();
+    Memory::apu = SPC700();
 }
 
 void SNES::runFrame() {

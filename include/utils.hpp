@@ -176,7 +176,7 @@ namespace Helpers {
     }
 
     constexpr u8 get8BitColor (u8 color5) {
-        return(color5 << 3) | (color5 >> 2);
+        return (color5 << 3) | (color5 >> 2);
     }
 
     inline int popcnt32 (int number) {
