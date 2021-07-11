@@ -12,6 +12,8 @@ set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 if(WIN32)
     set(SFML_STATIC_LIBRARIES TRUE)
+elseif(APPLE)
+    set(IMGUI_SFML_FIND_SFML OFF) # Make imgui-sfml work with brew SFML installs
 endif()
 find_package(SFML COMPONENTS system window graphics CONFIG REQUIRED)
 
@@ -61,8 +63,10 @@ add_executable(SNES
     third-party/sha1/sha1.cpp
 )
 
+find_package(OpenGL REQUIRED)
+
 if(WIN32)
-    target_link_libraries (SNES PRIVATE sfml-system sfml-network sfml-graphics sfml-window Imm32 opengl32 glu32)
+    target_link_libraries (SNES PRIVATE sfml-system sfml-network sfml-graphics sfml-window Imm32 glu32 ${OPENGL_LIBRARY})
 else()
-    target_link_libraries (SNES PRIVATE sfml-system sfml-network sfml-graphics sfml-window)
+    target_link_libraries (SNES PRIVATE sfml-system sfml-network sfml-graphics sfml-window ${OPENGL_LIBRARY})
 endif()
