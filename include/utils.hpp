@@ -7,7 +7,6 @@
 #include "sha1.hpp"    // For calculating SHA hashes, used by loadROMWithHash
 #include "fmt/format.h" // Core fmt functions
 #include "fmt/color.h"  // Text coloring fmt functions
-#include "fmt/printf.h" // fmt::sprintf
 
 using u8 = std::uint8_t;
 using u16 = std::uint16_t;
