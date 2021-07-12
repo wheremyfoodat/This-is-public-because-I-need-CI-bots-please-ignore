@@ -43,5 +43,5 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: Dmg
-        path: './build/snes.dmg'
+        path: './build/SNES'
       
