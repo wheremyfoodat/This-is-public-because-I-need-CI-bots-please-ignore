@@ -64,6 +64,7 @@ add_executable(SNES
     third-party/fmt/src/format.cc
 )
 
+# set_property(TARGET SNES PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE) # Enable LTO
 find_package(OpenGL REQUIRED)
 
 if(WIN32)
