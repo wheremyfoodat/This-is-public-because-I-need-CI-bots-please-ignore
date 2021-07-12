@@ -100,7 +100,7 @@ void cmp_mem_reg() {
     const auto operand1 = read (address);
     const auto result = operand1 - operand2;
     setNZ (result);
-    psw.carry = operand2 > operand1;
+    psw.carry = operand1 >= operand2;
 }
 
 template <SPC_Operands operand, SPC_AddressingModes addrMode>
@@ -111,7 +111,7 @@ void cmp_reg_mem() {
     const auto operand2 = read (address);
     const auto result = operand1 - operand2;
     setNZ (result);
-    psw.carry = operand2 > operand1;
+    psw.carry = operand1 >= operand2;
 }
 
 template <SPC_Operands op1, SPC_Operands op2>
@@ -121,7 +121,7 @@ void cmp_reg() {
 
     const auto result = operand1 - operand2;
     setNZ (result);
-    psw.carry = operand2 > operand1;
+    psw.carry = operand1 >= operand2;
 }
 
 template <SPC_AddressingModes addrMode>
@@ -316,6 +316,13 @@ void ror_accumulator() {
     const u8 carry = psw.carry;
     psw.carry = a & 1; // Store LSB of a into carry
     a = (a >> 1) | (carry << 7); // Rotate with carry
+    setNZ (a); // Set other flags
+}
+
+void rol_accumulator() {
+    const u8 carry = psw.carry;
+    psw.carry = a >> 7; // Store MSB of a into carry
+    a = (a << 1) | carry; // Rotate with carry
     setNZ (a); // Set other flags
 }
 

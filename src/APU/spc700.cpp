@@ -123,6 +123,8 @@ void SPC700::executeOpcode() {
         case 0x4C: lsr_mem <SPC_AddressingModes::Absolute>(); break;
         case 0x5C: lsr_accumulator(); break;
 
+        case 0x3C: rol_accumulator(); break;
+
         case 0x6B: ror_mem <SPC_AddressingModes::Direct>(); break;
         case 0x6C: ror_mem <SPC_AddressingModes::Absolute>(); break;
         case 0x7C: ror_accumulator(); break;
@@ -283,7 +285,7 @@ void SPC700::executeOpcode() {
 
             const auto bit = imm >> 13; // Top 3 bits of imm are a bit index
             const auto val = read (imm & 0x1FFF); // Low 13 bits of immediate are a memory address
-            psw.carry = !(psw.carry || Helpers::isBitSet(val, bit));
+            psw.carry = psw.carry | (!Helpers::isBitSet(val, bit));
         } break;
 
         case 0x4A: { // AND1 c, mem, bit
@@ -314,6 +316,17 @@ void SPC700::executeOpcode() {
             if (Helpers::isBitSet(val, bit)) 
                 psw.carry = !psw.carry;
         } break;
+
+        case 0xAA: { // MOV1 c, mem, bit
+            const auto imm = nextWord();
+            const auto bit = imm >> 13; // Top 3 bits of imm are a bit index
+            const auto val = read (imm & 0x1FFF); // Low 13 bits of immediate are a memory address
+
+            psw.carry = Helpers::isBitSet (val, bit);
+        } break;
+
+        case 0xBE: Helpers::warn ("[SPC700] DAS instruction ignored\n"); break;
+        case 0xDF: Helpers::warn ("[SPC700] DAA instruction ignored\n"); break;
 
         default: Helpers::panic ("[SPC700] Unimplemented opcode: {:02X}\n", opcode); break;
     }
