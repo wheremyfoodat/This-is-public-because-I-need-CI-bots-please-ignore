@@ -37,11 +37,11 @@ jobs:
       run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
 
     - name: List
-      run: find . -type d
+      run: find . -type f
 
     - name: Upload DMG
       uses: actions/upload-artifact@v2
       with:
         name: Dmg
-        path: '**/*.dmg'
+        path: './build/snes.dmg'
       
