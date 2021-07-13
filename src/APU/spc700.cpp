@@ -123,6 +123,7 @@ void SPC700::executeOpcode() {
         case 0x4C: lsr_mem <SPC_AddressingModes::Absolute>(); break;
         case 0x5C: lsr_accumulator(); break;
 
+        case 0x2B: rol_mem <SPC_AddressingModes::Direct>(); break;
         case 0x3C: rol_accumulator(); break;
 
         case 0x6B: ror_mem <SPC_AddressingModes::Direct>(); break;

@@ -319,6 +319,18 @@ void ror_accumulator() {
     setNZ (a); // Set other flags
 }
 
+template <SPC_AddressingModes addrMode>
+void rol_mem() {
+    const u8 carry = psw.carry;
+    const auto address = getAddress <addrMode>();
+    auto val = read (address); // Read memory value
+
+    psw.carry = val >> 7; // Store lsb of value into carry
+    val = (val << 1) | carry; // Rotate with carry
+    setNZ (val); // Set other flags
+    write (address, val); // Writeback result
+}
+
 void rol_accumulator() {
     const u8 carry = psw.carry;
     psw.carry = a >> 7; // Store MSB of a into carry

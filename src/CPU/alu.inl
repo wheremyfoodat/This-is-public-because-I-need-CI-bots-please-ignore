@@ -245,7 +245,7 @@ void adc_mem() {
 
 template <bool is16Bit>
 void sbc (u16 operand) {
-    if (psw.decimal) Helpers::panic ("Decimal mode ADC");
+    if (psw.decimal) Helpers::panic ("Decimal mode SBC");
 
     if constexpr (is16Bit) {
         operand = ~operand; // Invert the operand and treat the operation as an addition
