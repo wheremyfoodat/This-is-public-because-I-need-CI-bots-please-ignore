@@ -67,7 +67,7 @@ void SPC700::write (u16 address, u8 value) {
                 break;
 
             case 0xF2: dspRegisterIndex = value; break;
-            case 0xF3: Helpers::warn ("Wrote {:02X} to DSP register {:02X}\n", value, dspRegisterIndex); break; // DSP register data. We currently don't emulate the DSP :(
+            case 0xF3: break; // DSP register data. We currently don't emulate the DSP :(
 
             case 0xF4: outputPorts[0] = value; break;  // CPU -> SPC communication output ports. The SPC writes here, the CPU reads from here
             case 0xF5: outputPorts[1] = value; break;

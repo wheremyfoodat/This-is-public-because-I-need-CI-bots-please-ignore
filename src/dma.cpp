@@ -16,7 +16,7 @@ void Memory::doGPDMA (int channel) {
         default: step = 0; // Fixed address otherwise 
     }
 
-    Helpers::warn ("DMA from channel {}.\nByte counter: {:04X}.\nA-Bus address: {:4X}\nB-Bus address: {:4X}\nStep: {}\n", 
+    fmt::print ("DMA from channel {}.\nByte counter: {:04X}.\nA-Bus address: {:4X}\nB-Bus address: {:4X}\nStep: {}\n", 
     channel, counter ? counter : 0x10000, aBusAddress, bBusAddress, step);
 
     if (transferType == DMADirection::CPUToIO && params.unitSelect == 0) {
