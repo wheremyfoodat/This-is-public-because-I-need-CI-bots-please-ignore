@@ -105,7 +105,7 @@ void Memory::mapFastmemPages() {
     }
 
     else if (cart.mapper == Mappers::HiROM) { // Map HiROM
-        if (cart.rom.size() >= 4 * megabyte) Helpers::panic ("HiROM ROM over 4MB");
+        if (cart.rom.size() > 4 * megabyte) Helpers::panic ("HiROM ROM over 4MB");
         u32 romOffset = 32 * kilobyte; // Top 32KB of the first bank
 
         // Map system area RAM and ROM to fastmem
