@@ -42,6 +42,7 @@ void SNES::step() {
                     break;
 
                 case EventTypes::EndOfLine:
+                    ppu.cycleLineStarted = e.timestamp; // Back up the timestamp the current line started
                     ppu.line += 1; // Increment PPU line counter
                     ppu.hvbjoy &= ~0x40; // Turn off H-Blank flag in hvbjoy
 

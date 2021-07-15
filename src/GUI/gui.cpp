@@ -68,7 +68,7 @@ void GUI::update() {
     if (showSPCMemory)
         spcEditor.DrawWindow ("SPC Memory Editor", Memory::apu.getRAM(), 0x10000);
 
-    window.clear();
+    window.clear (sf::Color(0xDEADBEFF)); // Clear window with magenta
     ImGui::SFML::Render(window);
     window.display();
 

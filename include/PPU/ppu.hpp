@@ -89,6 +89,37 @@ public:
         if (buffers[1] == nullptr) buffers[1] = new u8[256 * 224 * 4]();
     }
 
+    u16 hcounterLatch = 0; // The latched H-Counter value
+    u16 vcounterLatch = 0; // The latched V-Counter value
+    u64 cycleLineStarted = 0; // A timestamp showing what cycle the current PPU line started rendering, used to implement H-Counter latching
+    
+    bool hcounterFirstRead = true; // Is this the first or second time we're reading the H-Counter?
+    bool vcounterFirstRead = true; // Is this the first or second time we're reading the V-Counter?
+
+    // Latch the H and V counter when reading from 0x2137
+    void latchHV (u64 currentTimestamp) {
+        u64 cyclesPassed = currentTimestamp - cycleLineStarted; // Count how many cycles have passed since this line started
+        vcounterLatch = line;
+        hcounterLatch = cyclesPassed >> 2; // This assumes 1 dot = 4 cycles. This is not always the case, as Anomie's docs show. TODO: Fix
+        
+        Helpers::warn ("Latched H/V counter\n");
+    }
+
+    u8 readHCounter() {
+        const auto val = hcounterFirstRead ? (hcounterLatch & 0xFF) : (hcounterLatch >> 8); // Return low 8 bits on first read, top 1 bit on second
+        hcounterFirstRead = !hcounterFirstRead; // Flip the flag that shows if this is the first or second read
+
+        return val;
+    }
+
+    u8 readVCounter() {
+        const auto val = vcounterFirstRead ? (vcounterLatch & 0xFF) : (vcounterLatch >> 8); // Return low 8 bits on first read, top 1 bit on second
+        vcounterFirstRead = !vcounterFirstRead; // Flip the flag that shows if this is the first or second read
+
+        return val;
+    }
+
+    // Actual rendering stuff
     void renderScanline();
 
     template <Depth depth, int number, RenderPriority priority>

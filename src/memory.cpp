@@ -234,6 +234,13 @@ u8 Memory::readSlow (u32 address) {
             case 0x2134: return (u8) mathEngine.m7_product; // MPYL
             case 0x2135: return (u8) (mathEngine.m7_product >> 8); // MPYM
             case 0x2136: return (u8) (mathEngine.m7_product >> 16); // MPYH
+           
+            case 0x2137: // SLHV (Latch H/V counter)
+                ppu->latchHV (scheduler->timestamp); // Latch the current HV counters
+                return 0x21;  // TODO: Return open bus
+
+            case 0x213C: return ppu->readHCounter(); // OPHCT
+            case 0x213D: return ppu->readVCounter(); // OPVCT
 
             case 0x213F: Helpers::warn ("Read from PPU2 Status\n"); return 0;
 

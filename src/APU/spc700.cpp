@@ -107,6 +107,7 @@ void SPC700::executeOpcode() {
         case 0x5E: cmp_reg_mem <SPC_Operands::Register_y, SPC_AddressingModes::Absolute>(); break;
         case 0x64: cmp_reg_mem <SPC_Operands::Register_a, SPC_AddressingModes::Direct>(); break;
         case 0x65: cmp_reg_mem <SPC_Operands::Register_a, SPC_AddressingModes::Absolute>(); break;
+        case 0x74: cmp_reg_mem <SPC_Operands::Register_a, SPC_AddressingModes::Direct_x>(); break;
         case 0x75: cmp_reg_mem <SPC_Operands::Register_a, SPC_AddressingModes::Absolute_x>(); break;
         case 0x76: cmp_reg_mem <SPC_Operands::Register_a, SPC_AddressingModes::Absolute_y>(); break;
         case 0x7E: cmp_reg_mem <SPC_Operands::Register_y, SPC_AddressingModes::Direct>(); break;
