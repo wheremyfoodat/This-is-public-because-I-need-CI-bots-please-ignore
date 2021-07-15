@@ -127,4 +127,5 @@ public:
 
     void executeOpcode();
     void runUntil (u64 timestamp);
+    u8* getRAM() { return ram.data(); }
 };

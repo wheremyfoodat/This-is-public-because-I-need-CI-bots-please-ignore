@@ -12,6 +12,7 @@ class GUI {
 
     MemoryEditor memoryEditor;
     MemoryEditor vramEditor;
+    MemoryEditor spcEditor;
     std::thread emuThread;
 
 public:
@@ -34,6 +35,7 @@ private:
 
     bool showRegisterWindow = false;
     bool showSPCWindow = false;
+    bool showSPCMemory = false;
     bool showCartWindow = false;
     bool showMemoryEditor = false;
     bool showVramEditor = false;

@@ -28,6 +28,7 @@ void SPC700::executeOpcode() {
         case 0x4E: tclr1(); break;
 
         case 0x5D: mov <SPC_Operands::Register_x, SPC_Operands::Register_a>(); break;
+        case 0x9D: mov <SPC_Operands::Register_x, SPC_Operands::Register_sp>(); break;
         case 0xBD: mov <SPC_Operands::Register_sp, SPC_Operands::Register_x>(); break;
         case 0xCD: mov <SPC_Operands::Register_x, SPC_Operands::Immediate>(); break;
         case 0xF8: mov <SPC_Operands::Register_x, SPC_Operands::Direct_byte>(); break;
@@ -44,7 +45,7 @@ void SPC700::executeOpcode() {
         case 0xC4: mov_mem <SPC_AddressingModes::Direct, SPC_Operands::Register_a>(); break;
         case 0xC5: mov_mem <SPC_AddressingModes::Absolute, SPC_Operands::Register_a>(); break;
         case 0xC6: mov_mem <SPC_AddressingModes::Indirect, SPC_Operands::Register_a>(); break;
-        case 0xC7: mov_mem <SPC_AddressingModes::Direct_x, SPC_Operands::Register_a>(); break;
+        case 0xC7: mov_mem <SPC_AddressingModes::Direct_indirect_x, SPC_Operands::Register_a>(); break;
         case 0xC9: mov_mem <SPC_AddressingModes::Absolute, SPC_Operands::Register_x>(); break;
         case 0xCB: mov_mem <SPC_AddressingModes::Direct, SPC_Operands::Register_y>(); break;
         case 0xCC: mov_mem <SPC_AddressingModes::Absolute, SPC_Operands::Register_y>(); break;
@@ -260,6 +261,7 @@ void SPC700::executeOpcode() {
         case 0xF1: call (read16(0xFFC0)); break; // TCALL 15
         case 0xEF: case 0xFF: Helpers::panic ("[SPC700] Hanging SPC instruction {} at PC: {:04X}\n", opcode, pc - 1); break; // Sleep, stop
 
+        case 0x0F: brk(); break;
         case 0x6E: dbnz_dp(); break;
         case 0xFE: dbnz_y(); break;
 
@@ -326,8 +328,29 @@ void SPC700::executeOpcode() {
             psw.carry = Helpers::isBitSet (val, bit);
         } break;
 
-        case 0xBE: Helpers::warn ("[SPC700] DAS instruction ignored\n"); break;
-        case 0xDF: Helpers::warn ("[SPC700] DAA instruction ignored\n"); break;
+        case 0xBE: { // DAS
+            if (!psw.carry || a > 0x99) {
+                a -= 0x60;
+                psw.carry = false;
+            }
+
+            if (!psw.halfCarry || ((a & 0xF) > 9))
+                a -= 6;
+            
+            setNZ (a);
+        } break;
+
+        case 0xDF: { // DAA
+            if (psw.carry || a > 0x99) {
+                a += 0x60;
+                psw.carry = true;
+            }
+
+            if (psw.halfCarry || ((a & 0xF) > 9))
+                a += 6;
+
+            setNZ (a);
+        } break;
 
         default: Helpers::panic ("[SPC700] Unimplemented opcode: {:02X}\n", opcode); break;
     }

@@ -90,6 +90,8 @@ void SPC700::write (u16 address, u8 value) {
                 timer2.divider = value ? value : 256; // A divider of 0 means 256
                 break;
 
+            case 0xFD: case 0xFE: case 0xFF: break; // Read-only
+
             default: Helpers::panic ("[SPC700] Wrote to unknown IO port {:02X}(Val: {:02X})\n", address, value);
         }
     }

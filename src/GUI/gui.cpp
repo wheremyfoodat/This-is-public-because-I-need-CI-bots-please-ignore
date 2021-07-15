@@ -62,9 +62,11 @@ void GUI::update() {
         showPPURegisters();
     
     if (showMemoryEditor)
-        memoryEditor.DrawWindow ("Memory Editor", nullptr, 0x1000000);
+        memoryEditor.DrawWindow ("CPU Memory Editor", nullptr, 0x1000000);
     if (showVramEditor)
         vramEditor.DrawWindow ("VRAM viewer", g_snes.ppu.vram.data(), 0x10000);
+    if (showSPCMemory)
+        spcEditor.DrawWindow ("SPC Memory Editor", Memory::apu.getRAM(), 0x10000);
 
     window.clear();
     ImGui::SFML::Render(window);
@@ -119,7 +121,8 @@ void GUI::showMenuBar() {
             ImGui::MenuItem ("Show DMA info", nullptr, &showDMAWindow);
             ImGui::MenuItem ("Show PPU registers", nullptr, &showPPUWindow);
             ImGui::MenuItem ("Show VRAM editor", nullptr, &showVramEditor);
-            ImGui::MenuItem ("Show memory", nullptr, &showMemoryEditor);
+            ImGui::MenuItem ("Show CPU memory", nullptr, &showMemoryEditor);
+            ImGui::MenuItem ("Show SPC memory", nullptr, &showSPCMemory);
             ImGui::EndMenu();
         }
 
@@ -219,6 +222,9 @@ void GUI::showSPCRegisters() {
         ImGui::Checkbox ("Break", &breakFlag);
         ImGui::SameLine();
         ImGui::Checkbox ("Interrupt enable", &interruptEnable);
+
+        if (ImGui::Button ("Step") && Memory::cart.mapper != Mappers::NoCart) // Make sure not to run without cart
+            Memory::apu.executeOpcode();
 
         ImGui::End();
     }

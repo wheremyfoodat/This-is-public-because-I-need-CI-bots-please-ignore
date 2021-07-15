@@ -52,6 +52,8 @@ void jsr() {
 void brl() {
     const auto offset = (s16) nextWord();
     pc += offset;
+
+    cycles = 4;
 }
 
 void rts() {

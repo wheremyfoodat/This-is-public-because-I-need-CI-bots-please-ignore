@@ -306,9 +306,9 @@ void compare (u16 reg, bool isShort) {
         const auto addr = getAddress <addrMode, u8, AccessTypes::Read>();
         const auto val = Memory::read8 (addr);
         
-        const u8 a = reg & 0xFF;
-        setNZ8 (a - val);
-        psw.carry = a >= val;
+        const u8 tmp = reg & 0xFF;
+        setNZ8 (tmp - val);
+        psw.carry = tmp >= val;
     }
 
     else {

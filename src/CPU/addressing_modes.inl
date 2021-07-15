@@ -35,7 +35,7 @@ u32 getAddress() {
     constexpr bool is16Bit = sizeof(T) == 2;
 
     if constexpr (addrMode == AddressingModes::Absolute) {
-        cycles += is16Bit ? 5 : 4;
+        cycles = is16Bit ? 5 : 4;
 
         if constexpr (type == AccessTypes::RMW && !is16Bit)
             cycles += 2;
@@ -46,7 +46,7 @@ u32 getAddress() {
     }
 
     else if constexpr (addrMode == AddressingModes::Absolute_x) {
-        cycles += is16Bit ? 5 : 4;
+        cycles = is16Bit ? 5 : 4;
         const auto abs = (u32) nextWord() | dbOffset;
         const auto address = (abs + (u32) x) & 0xFFFFFF; // Note: The address is masked to 24 bits in this case
         
@@ -68,7 +68,7 @@ u32 getAddress() {
     }
 
     else if constexpr (addrMode == AddressingModes::Absolute_y) {
-        cycles += is16Bit ? 5 : 4;
+        cycles = is16Bit ? 5 : 4;
         const auto abs = (u32) nextWord() | dbOffset;
         const auto address = (abs + (u32) y) & 0xFFFFFF; // Note: The address is masked to 24 bits in this case
         
@@ -84,7 +84,7 @@ u32 getAddress() {
     }
 
     else if constexpr (addrMode == AddressingModes::Absolute_long) {
-        cycles += is16Bit ? 6 : 5;
+        cycles = is16Bit ? 6 : 5;
         const auto offset = nextWord();
         const auto bank = nextByte();
 
@@ -92,7 +92,7 @@ u32 getAddress() {
     }
 
     else if constexpr (addrMode == AddressingModes::Absolute_long_x) {
-        cycles += is16Bit ? 6 : 5;
+        cycles = is16Bit ? 6 : 5;
         const auto offset = nextWord();
         const auto bank = nextByte();
 
@@ -100,7 +100,7 @@ u32 getAddress() {
     }
 
     else if constexpr (addrMode == AddressingModes::Direct) {
-        cycles += is16Bit ? 4 : 3;
+        cycles = is16Bit ? 4 : 3;
         if (dpOffset & 0xFF) // add an extra cycle if the low byte of the direct page offset is non-zero
             cycles++;
 
@@ -113,7 +113,7 @@ u32 getAddress() {
     }
 
     else if constexpr (addrMode == AddressingModes::Direct_x) {
-        cycles += is16Bit ? 5 : 4;
+        cycles = is16Bit ? 5 : 4;
         
         if constexpr (type == AccessTypes::RMW && !is16Bit)
             cycles += 2;
@@ -127,7 +127,7 @@ u32 getAddress() {
     }
 
     else if constexpr (addrMode == AddressingModes::Direct_y) {
-        cycles += is16Bit ? 5 : 4;
+        cycles = is16Bit ? 5 : 4;
         if (dpOffset & 0xFF) // add an extra cycle if the low byte of the direct page offset is non-zero
             cycles++;
 
@@ -135,7 +135,7 @@ u32 getAddress() {
     }
 
     else if constexpr (addrMode == AddressingModes::Direct_indirect) {
-        cycles += is16Bit ? 6 : 5;
+        cycles = is16Bit ? 6 : 5;
         if (dpOffset & 0xFF) // add an extra cycle if the low byte of the direct page offset is non-zero
             cycles++;
 
@@ -144,7 +144,7 @@ u32 getAddress() {
     }
 
     else if constexpr (addrMode == AddressingModes::Direct_indirect_long) {
-        cycles += is16Bit ? 7 : 6;
+        cycles = is16Bit ? 7 : 6;
         if (dpOffset & 0xFF) // add an extra cycle if the low byte of the direct page offset is non-zero
             cycles++;
 
@@ -153,7 +153,7 @@ u32 getAddress() {
     }
 
     else if constexpr (addrMode == AddressingModes::Direct_indirect_x) {
-        cycles += is16Bit ? 7 : 6;
+        cycles = is16Bit ? 7 : 6;
         if (dpOffset & 0xFF) // add an extra cycle if the low byte of the direct page offset is non-zero
             cycles++;
 
@@ -162,7 +162,7 @@ u32 getAddress() {
     }
 
     else if constexpr (addrMode == AddressingModes::Direct_indirect_y) {
-        cycles += is16Bit ? 6 : 5;
+        cycles = is16Bit ? 6 : 5;
         const u16 pointer = (u16) nextByte() + dpOffset;
         const u32 address = Memory::read16(pointer) | dbOffset;
         const u32 finalAddress = (address + y) & 0xFFFFFF;
@@ -182,7 +182,7 @@ u32 getAddress() {
     }
 
     else if constexpr (addrMode == AddressingModes::Direct_indirect_long_y) {
-        cycles += is16Bit ? 7 : 6;
+        cycles = is16Bit ? 7 : 6;
 
         if (dpOffset & 0xFF) // add an extra cycle if the low byte of the direct page offset is non-zero
             cycles++;
@@ -193,13 +193,13 @@ u32 getAddress() {
     }
 
     else if constexpr (addrMode == AddressingModes::Stack_relative) {
-        cycles += is16Bit ? 5 : 4;
+        cycles = is16Bit ? 5 : 4;
 
         return ((u32) nextByte() + (u32) sp) & 0xFFFF;
     }
 
     else if constexpr (addrMode == AddressingModes::Stack_relative_indirect_indexed) {
-        cycles += is16Bit ? 8 : 7;
+        cycles = is16Bit ? 8 : 7;
 
         const u16 pointer = (u16) nextByte() + sp;
         return (Memory::read16(pointer) + dbOffset + y) & 0xFFFFFF;

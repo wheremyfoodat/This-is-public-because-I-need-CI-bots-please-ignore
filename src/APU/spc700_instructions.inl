@@ -226,7 +226,7 @@ void eor_dp() {
 u8 adc (u8 operand1, u8 operand2, u8 carry) {
     u16 result = (u16) operand1 + (u16) operand2 + (u16) carry;
 
-    psw.halfCarry = (operand1 & 0xF) + (operand2 & 0xF) > 0xF;
+    psw.halfCarry = ((operand1 & 0xF) + (operand2 & 0xF) + carry) >> 4;
     psw.carry = result >> 8;
 
     result &= 0xFF;
@@ -544,4 +544,13 @@ void tset1() {
 void xcn() {
     a = (a >> 4) | (a << 4);
     setNZ (a);
+}
+
+void brk() {
+    push16 (pc); // Push PC and PSW, set PC to BRK vector, enable break flag and disable IRQs
+    push8 (psw.raw);
+    pc = read16 (0xFFDE);
+
+    psw.breakFlag = true;
+    psw.interruptEnable = false;
 }
