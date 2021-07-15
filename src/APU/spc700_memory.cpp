@@ -4,7 +4,7 @@
 u8 SPC700::read (u16 address) {
     if (address >= 0xF0 && address <= 0xFF) { // Handle IO ports
         switch (address) {
-            case 0xF0: case 0xF1: return 0; // Write-only
+            case 0xF0: case 0xF1: case 0xFA: case 0xFB: case 0xFC: return 0; // Write-only
             case 0xF2: return dspRegisterIndex;  // DSP register index
             case 0xF3: Helpers::warn ("[SPC700] Read from DSP data   PC: {:02X}\nDSP Register: {:02X}\n", pc, dspRegisterIndex); return 0;
 
