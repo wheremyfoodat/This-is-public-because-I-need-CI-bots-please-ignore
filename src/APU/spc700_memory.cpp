@@ -43,6 +43,7 @@ u16 SPC700::read16 (u16 address) {
 void SPC700::write (u16 address, u8 value) {
     if (address >= 0xF0 && address <= 0xFF) { // Handle IO ports
         switch (address) {
+            case 0xF0: Helpers::warn ("Wrote to undocumented SPC700 register\n"); break;
             case 0xF1: // CONTROL register
                 bootromMapped = (value & 0x80) != 0; // Bit 7 of control tells us whether to map the bootrom or not
                 if (!(value & 0x1)) timer0.disable (cycles); // Bits 0-2 enable or disable the timers

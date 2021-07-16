@@ -27,6 +27,14 @@ void Memory::doGPDMA (int channel) {
                             // and for this reason transfer 0x10000 bytes when you set the counter to 0
     }
 
+    else if (transferType == DMADirection::IOToCPU && params.unitSelect == 0) {
+        do {
+            write8 (aBusAddress, readSlow(bBusAddress)); // Copy a byte
+            aBusAddress += step;
+        } while (--counter); // Using a do-while allows us to copy the hardware, which pre-decrements the byte counter, 
+                             // and for this reason transfer 0x10000 bytes when you set the counter to 0
+    }
+
     else if (transferType == DMADirection::CPUToIO && params.unitSelect == 1) {
         step <<= 1;
         if (counter & 1) Helpers::panic ("DMA with unit select = 1 where byte counter is odd");

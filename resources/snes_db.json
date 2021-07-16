@@ -12627,6 +12627,13 @@
 	"RAMSize": 0,
 	"Region": "USA"
 },
+"d245e41a2b590f7d63666b0772cbddfb26f254a2": {
+	"Mapper": "LoROM",
+	"ROMType": "Normal + Battery",
+	"ROMSize": 4,
+	"RAMSize": 64,
+	"Region": "USA"
+},
 "b10b1c1c6c5a5a6512fec91032a17498149ce40a": {
 	"Mapper": "HiROM",
 	"ROMType": "Normal + Battery",
