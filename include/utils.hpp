@@ -36,7 +36,7 @@ namespace Helpers {
 
     template <typename... Args>
     static void warn (const char* fmt, const Args&... args) {
-        fmt::print (fg(fmt::color::red), fmt, args...);
+        fmt::print (fg(fmt::color::yellow), fmt, args...);
     }
 
     // Read a ROM into a vector of uint8_t

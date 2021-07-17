@@ -66,6 +66,6 @@ u8 getOperand() {
     else if constexpr (operand == SPC_Operands::Immediate)
         return nextByte();
     else if constexpr (operand == SPC_Operands::Direct_byte)
-        return read(nextByte() + dpOffset);
+        return read (nextByte() + dpOffset);
     else Helpers::panic ("[SPC700] Unimplemented operand {}\n", operand);
 }

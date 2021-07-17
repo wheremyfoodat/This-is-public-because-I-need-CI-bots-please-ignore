@@ -62,6 +62,21 @@ void Memory::doGPDMA (int channel) {
             aBusAddress += step;
         } while (counter);
     }
+
+    else if (transferType == DMADirection::IOToCPU && params.unitSelect == 5) {
+        step <<= 2;
+        if (counter & 3) Helpers::panic ("DMA with unit select = 5 where byte counter is not a multiple of 4");
+
+        do {
+            write8 (aBusAddress, readSlow(bBusAddress));
+            write8 (aBusAddress + 1, readSlow(bBusAddress + 1));
+            write8 (aBusAddress + 2, readSlow(bBusAddress));
+            write8 (aBusAddress + 3, readSlow(bBusAddress + 1));
+
+            counter -= 4;
+            aBusAddress += step;
+        } while (counter);
+    }
         
     else
         Helpers::panic ("Unknown unit select for GPDMA: {}\nDirection: {}", params.unitSelect, transferType);
