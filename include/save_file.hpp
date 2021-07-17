@@ -74,7 +74,7 @@ public:
         return pointer[index];
     }
 
-    uint8_t& operator[](int index) {
+    uint8_t& operator[](size_t index) {
         return pointer[index];
     }
 };
