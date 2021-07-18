@@ -291,7 +291,7 @@ void GUI::showPPURegisters() {
 
 void GUI::showDisplay() {
     if (ImGui::Begin("Display")) {
-        const auto size = ImGui::GetWindowSize();
+        const auto size = ImGui::GetContentRegionAvail();
         const auto scale_x = size.x / 256.f;
         const auto scale_y = size.y / 224.f;
         const auto scale = scale_x < scale_y ? scale_x : scale_y;
